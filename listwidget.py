@@ -42,11 +42,11 @@ class ListWidget(QWidget):
         row1.addStretch(1)
         row1.addWidget(QLabel("x: [m] "))
         row1.addWidget(self.geo_x)
-        row1.addWidget(self.geo_add)
+        row1.addWidget(self.geo_del)
         row2.addStretch(1)
         row2.addWidget(QLabel("y: [m] "))
         row2.addWidget(self.geo_y)
-        row2.addWidget(self.geo_del)
+        row2.addWidget(self.geo_add)
 
         layout.addWidget(self.geo_list)
         layout.addLayout(row1)
@@ -130,8 +130,4 @@ class ListWidget(QWidget):
             items.append(self.geo_list.item(i).text())
 
         return items
-
-        
-
-
 

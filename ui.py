@@ -17,6 +17,8 @@ class bbToolUi(QWidget):
         self.supports = [[0,0], [30,0]]
         self.nodes = []
 
+        self.crosssec = dict()
+        
         # # Set Up the main Layout
         self.frame = QHBoxLayout()
         self.layoutLeft = QVBoxLayout()
@@ -71,10 +73,10 @@ class bbToolUi(QWidget):
         index = self.listwidget.geo_list.currentRow()
         if index == -1:
             self.selected_node = [None, None]
-            self._paint._triger_refresh(selection=self.selected_node)
+            self._paint._triger_refresh(nodes=self.nodes, selection=self.selected_node)
         else:
             self.selected_node = self.nodes[index]
-            self._paint._triger_refresh(selection=self.selected_node)
+            self._paint._triger_refresh(nodes=self.nodes, selection=self.selected_node)
 
     # def randVar(self):
 
