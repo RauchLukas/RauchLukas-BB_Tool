@@ -209,9 +209,6 @@ class GCrosssection(QWidget):
             QSizePolicy.MinimumExpanding,
         )
 
-
-
-
         self.h = 250
         self.b = 600
         self.hc = self.h * 0.5
@@ -243,9 +240,6 @@ class GCrosssection(QWidget):
 
         self.b_tot = self.b - 2 * self.pad
         self.fact = self.b_tot / self.ub_b
-        print(self.fact)
-
-
 
     def paintEvent(self, event):
 
@@ -288,7 +282,6 @@ class GCrosssection(QWidget):
         self.painter.drawRect(rect)
 
         # Draw Fahrbahnbelag
-
         b = self.lr_b * fct
 
         rect = QRectF(
@@ -331,7 +324,6 @@ class GCrosssection(QWidget):
             self.painter.drawRect(rect)
 
         # Draw Geländer
-
         b = (self.lr_b + 2 * self.rb_b + 2 * self.gt_b) * fct
         dy = b - self.gt_b * fct
        
@@ -349,7 +341,6 @@ class GCrosssection(QWidget):
             self.painter.drawRect(rect)
 
         # Draw Abstützung
-                        
         alpha = math.radians(self.alpha)
         e_u = (self.gt_b / math.sin(alpha))
         e_o = (self.gt_b / math.cos(alpha))
@@ -385,7 +376,6 @@ class GCrosssection(QWidget):
         )
 
         # Draw Geländerplanke 
-
         b = (self.lr_b + 2 * self.rb_b) * fct
         dy = (self.lr_b + 2 * self.rb_b - self.gp_t) * fct
        
@@ -413,10 +403,8 @@ class GCrosssection(QWidget):
                 )
             )
             self.painter.drawRect(rect)
-               
 
         # Label Fahrbahnbreite
-
         pen = self.painter.pen()
         pen.setWidth(1)
         pen.setColor(QColor('gray'))
@@ -430,7 +418,6 @@ class GCrosssection(QWidget):
         h0 = self.hc - 10 -  (self.tb_t + self.rb_h) * fct
         b0 = 0.5 * self.lr_b * fct
 
-        
         self.painter.drawLine(
             QPointF(self.bc - b0 -5, h0),
             QPointF(self.bc + b0 +5, h0)
@@ -447,10 +434,8 @@ class GCrosssection(QWidget):
             (f"{self.lr_b:.2f}")
         )
 
-        
         self.labelWidget("Überbau Querschnitt")        
         self.painter.end()
-
 
     def _triger_refresh(self, nodes, selection):
 
@@ -463,7 +448,6 @@ class GCrosssection(QWidget):
     
     def sizeHint(self):
         return QSize(self.b,self.h)
-
 
     def labelWidget(self, s):
         '''Prints the label onto the widget.'''

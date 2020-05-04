@@ -28,7 +28,6 @@ class bbToolUi(QWidget):
         self._centralWidget.setLayout(self.frame)
         # self.setCentralWidget(self._centralWidget)
 
-
         # Import the GUI modula
         self._createLoadWidget()
 
@@ -41,6 +40,7 @@ class bbToolUi(QWidget):
         self.stackwidget = tw.TabWidget()
         self.stackwidget._createStackWidget()
         self.stackwidget.placeWidget(self.layoutLeft)
+        # self.stackwidget.tab_1.button.pressed.connect(print)
 
         self._paint = gw.Graphics(self.supports)     # retunrs a widget
         _butten = QPushButton("random")
@@ -52,6 +52,8 @@ class bbToolUi(QWidget):
         self.listwidget.clickedDelButten.connect(self._trigger_refresh_item)
         self.listwidget.clickedlistItem.connect(self._trigger_refresh_item)
 
+        self.stackwidget.tab_1.geometryChanged.connect(self._trigger_refresh_geo)
+
         self.layoutRight.addWidget(self._paint)
         self.layoutRight.addWidget(_butten)
 
@@ -59,7 +61,14 @@ class bbToolUi(QWidget):
         self.frame.addLayout(self.layoutRight)
 
         self.setLayout(self.frame)
+
         
+    def _trigger_refresh_geo(self):     # TODO Hier gehts weiter
+        
+        model = self.stackwidget.tab_1.getModel()
+
+        print(model)
+
     def _trigger_refresh_add(self):
 
         try:
@@ -77,18 +86,6 @@ class bbToolUi(QWidget):
         else:
             self.selected_node = self.nodes[index]
             self._paint._triger_refresh(nodes=self.nodes, selection=self.selected_node)
-
-    # def randVar(self):
-
-    #     x = random.uniform(0, 30)
-    #     y = random.gauss(2,0.5)**2
-    #     self.nodes.append([x, y])
-
-    #     self.x_d = x
-    #     self.y_d = 235
-
-    #     self._paint._triger_refresh(self.x_d, self.y_d, self.nodes)
-
 
     def _createLoadWidget(self):
         '''Creates the load input widget.'''
@@ -113,7 +110,8 @@ class bbToolUi(QWidget):
 
         self.layoutRight.addWidget(self.graphic_dummy)
 
-
+    def sPrint(self, s):
+        print(s)
     # def addListObject(self, s):
     #     self.geo_list.addItem(s)
 

@@ -65,8 +65,6 @@ class ListWidget(QWidget):
         x = self.geo_x.text()
         y = self.geo_y.text()
 
-
-
         if str(x):
             x = self.convertStr(x)
         if str(y):
@@ -95,8 +93,6 @@ class ListWidget(QWidget):
         self.update()
         self.clickedAddButten.emit(0)
 
-
-
     def convertStr(self, s):
         try:
             s.replace(',', '.')
@@ -104,7 +100,6 @@ class ListWidget(QWidget):
             pass
 
         return s
-
 
     def delListObject(self):
 
