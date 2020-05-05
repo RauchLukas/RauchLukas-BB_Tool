@@ -7,6 +7,7 @@ import random
 import listwidget as lw
 import tabwidget as tw
 import graphicswidget as gw
+import model
 
 
 class bbToolUi(QWidget):
@@ -14,7 +15,11 @@ class bbToolUi(QWidget):
     def __init__(self, *args, **kwargs):
         super(bbToolUi, self).__init__(*args, **kwargs)
 
+        self.model = model.Model()
+
         self.supports = [[0,0], [30,0]]
+        self.model.support = self.supports
+        
         self.nodes = []
 
         self.geo_model = dict()
@@ -53,6 +58,7 @@ class bbToolUi(QWidget):
         self.listwidget.clickedDelButten.connect(self._trigger_refresh_item)
         self.listwidget.clickedlistItem.connect(self._trigger_refresh_item)
 
+        self.stackwidget.tab_1.elementLengthChanged.connect(self.sPrint)
         self.stackwidget.tab_1.geometryChanged.connect(self._trigger_refresh_geo)
 
         self.layoutRight.addWidget(self._graphic)
@@ -62,6 +68,11 @@ class bbToolUi(QWidget):
         self.frame.addLayout(self.layoutRight)
 
         self.setLayout(self.frame)
+
+    def _triger_refresh_system(self):
+        self.model.spacing = self.stackwidget.tab_1.com_lt_l.currentText()
+
+        self._graphic.system._triger_refresh(self.model.spacing)
 
     def _triger_refresh_load(self):
         self.load_model['mlc'] = self.mlc_class.currentText()
@@ -77,7 +88,8 @@ class bbToolUi(QWidget):
 
         try:
             self.nodes[0]
-            self._graphic._triger_refresh(nodes=self.nodes)
+            nodes = self.model.makeNodes(self.nodes)
+            self._graphic._triger_refresh(nodes=nodes)
         except: 
             return
     
@@ -86,10 +98,12 @@ class bbToolUi(QWidget):
         index = self.listwidget.geo_list.currentRow()
         if index == -1:
             self.selected_node = [None, None]
-            self._graphic._triger_refresh(nodes=self.nodes, selection=self.selected_node)
+            nodes = self.model.makeNodes(self.nodes)
+            self._graphic._triger_refresh(nodes=nodes, selection=self.selected_node)
         else:
             self.selected_node = self.nodes[index]
-            self._graphic._triger_refresh(nodes=self.nodes, selection=self.selected_node)
+            nodes = self.model.makeNodes(self.nodes)
+            self._graphic._triger_refresh(nodes=nodes, selection=self.selected_node)
 
     def _createLoadWidget(self):
         '''Creates the load input widget.'''

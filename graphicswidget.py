@@ -23,9 +23,11 @@ class Graphics(QWidget):
         
         self.gradient = GGradient(self.nodes)
         self.crosssec = GCrosssection()
+        self.system = GSystem()
 
         layout.addWidget(self.gradient)
         layout.addWidget(self.crosssec)
+        layout.addWidget(self.system)
 
         self.setLayout(layout)
         
@@ -40,6 +42,62 @@ class Graphics(QWidget):
         self.update()
 
         self.gradient._triger_refresh(self.nodes, selection)
+
+
+class GSystem(QWidget):
+    '''Class containing all functions for visualization of the static system Qwidget. '''
+    
+    def __init__(self, *args, **kwargs):
+        super(GSystem,self).__init__(*args, **kwargs)
+
+        self.setSizePolicy(
+            QSizePolicy.Expanding,
+            QSizePolicy.Expanding,
+        )       
+
+        self.b = 600
+        self.h = 250
+        self.pad = 20
+
+        self.spacing = 3.5
+
+    def sizeHint(self):
+        return QSize(self.b,self.h)
+
+    def _triger_refresh(self, spacing):
+
+        self.spacing = spacing
+
+    def paintEvent(self, event):
+        '''Painter function within the GUI loop. Calls all the necessary draw functions.'''
+
+        self.b = self.width()
+        self.h = self.height()
+
+        self.painter = QPainter(self)
+        brush = QBrush()
+        brush.setColor(QColor('black'))
+        brush.setStyle(Qt.SolidPattern)
+        rect = QRect(0, 0, self.painter.device().width(), self.painter.device().height())
+        self.painter.fillRect(rect, brush)
+
+        self.labelWidget()
+
+        self.painter.end()
+
+    def labelWidget(self):
+        '''Prints the label onto the widget.'''
+
+        pen = self.painter.pen()
+        pen.setColor(QColor('gray'))
+        self.painter.setPen(pen)
+
+        font = self.painter.font()
+        font.setFamily('Latin')
+        font.setPointSize(10)
+        self.painter.setFont(font)
+
+        self.painter.drawText(5, 20, "Statisches System.")
 
 
 class GGradient(QWidget):
@@ -64,7 +122,6 @@ class GGradient(QWidget):
         self.y = 200
 
         self.selected_node = [None, None]
-
 
     def _triger_refresh(self, nodes, selection):
 

@@ -7,6 +7,8 @@ class StackOne(QWidget):
 
     geometryChanged = pyqtSignal(str)
 
+    elementLengthChanged = pyqtSignal(str)
+
     def __init__(self, *args, **kwargs):
         super(StackOne, self).__init__(*args, **kwargs)
 
@@ -164,6 +166,8 @@ class StackOne(QWidget):
 
         # SIGNALS
 
+        self.com_lt_l.currentTextChanged.connect(self.gElementChanged)
+                
         for key, arg in self.key_list.items():
             arg.currentTextChanged.connect(self.gComboboxChanged)
 
@@ -190,6 +194,18 @@ class StackOne(QWidget):
         self.com_rb_b.setCurrentIndex(5)
 
 
+    def gElementChanged(self):
+
+        self.element_length = self.com_lt_l.currentText()
+
+        self.elementLengthChanged.emit(self.element_length)
+
+    def gComboboxChanged(self):
+
+        for key, arg in self.key_list.items():
+            self.g_model[key] = arg.currentText()
+
+        self.geometryChanged.emit("geometry changed")
 
     def mComboboxChanged(self, signal, key):
         
@@ -200,12 +216,6 @@ class StackOne(QWidget):
 
         self.geometryChanged.emit("geometry changed")
 
-    def gComboboxChanged(self):
-
-        for key, arg in self.key_list.items():
-            self.g_model[key] = arg.currentText()
-
-        self.geometryChanged.emit("geometry changed")
 
     def getModel(self):
         
