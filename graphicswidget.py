@@ -217,18 +217,19 @@ class GCrosssection(QWidget):
         self.nn = self.h * 0.3
 
         self.lr_b = 4.0
-        self.ub_krag = 1.0
-        self.ub_b = self.lr_b + 2* self.ub_krag
 
         self.lt_n = 8
-        self.lt_h = 0.30
-        self.lt_b = 0.20
+        self.lt_h = 0.24
+        self.lt_b = 0.18
 
-        self.tb_t = 0.12
-        self.fb_t = 0.06
+        self.tb_t = 0.10
+        self.fb_t = 0.04
 
-        self.rb_h = 0.16
-        self.rb_b = 0.16
+        self.rb_h = 0.20
+        self.rb_b = 0.20
+
+        self.ub_krag = 1.0
+        self.ub_b = self.lr_b + 2 * self.rb_b + 2 * self.ub_krag
         
         self.gt_h = 1.00
         self.gt_t = 0.08
@@ -240,6 +241,24 @@ class GCrosssection(QWidget):
 
         self.b_tot = self.b - 2 * self.pad
         self.fact = self.b_tot / self.ub_b
+
+        self.model = dict()
+        self.model['m_tb'] = "c16"
+        self.model['m_lt'] = "c24"
+
+    def _triger_refresh_model(self, model):
+
+        self.model = model
+
+        for key, val in model.items():
+            try:
+                setattr(self, key, float(val))
+            except:
+                pass
+
+        self.ub_b = self.lr_b + 2 * self.rb_b + 2 * self.ub_krag
+
+        self.update()
 
     def paintEvent(self, event):
 
@@ -297,7 +316,7 @@ class GCrosssection(QWidget):
         b = (self.lr_b + self.rb_b)
         dy = b / (self.lt_n-1)
 
-        for i in range(self.lt_n):
+        for i in range(int(self.lt_n)):
             rect = QRectF(
                 QPointF(self.bc - (b0 - i * dy) * fct, self.hc,
                 ),
@@ -462,3 +481,12 @@ class GCrosssection(QWidget):
         self.painter.setFont(font)
 
         self.painter.drawText(5, 20, s)
+       
+        font.setPointSize(8)
+        self.painter.setFont(font)
+        m_tb = self.model['m_tb']
+        m_lt = self.model['m_lt']
+        s1 = f"Material Tragbelag:   {m_tb}"
+        s2 = f"Material Längsträger: {m_lt}"
+        self.painter.drawText(self.b-130, 18, s1)
+        self.painter.drawText(self.b-130, 35, s2)

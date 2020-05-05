@@ -17,7 +17,7 @@ class bbToolUi(QWidget):
         self.supports = [[0,0], [30,0]]
         self.nodes = []
 
-        self.crosssec = dict()
+        self.geo_model = dict()
         
         # # Set Up the main Layout
         self.frame = QHBoxLayout()
@@ -65,9 +65,9 @@ class bbToolUi(QWidget):
         
     def _trigger_refresh_geo(self):     # TODO Hier gehts weiter
         
-        model = self.stackwidget.tab_1.getModel()
+        self.geo_model = self.stackwidget.tab_1.getModel()
 
-        print(model)
+        self._paint.crosssec._triger_refresh_model(self.geo_model)
 
     def _trigger_refresh_add(self):
 

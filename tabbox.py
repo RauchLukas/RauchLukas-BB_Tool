@@ -18,7 +18,6 @@ class TabStack(QWidget):
 
         layout.addWidget(stack)
 
-
         self.setLayout(layout)
 
 

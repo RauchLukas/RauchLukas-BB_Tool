@@ -10,6 +10,8 @@ class StackOne(QWidget):
     def __init__(self, *args, **kwargs):
         super(StackOne, self).__init__(*args, **kwargs)
 
+        self.g_model = dict()
+
         m_boxWidget = QGroupBox("Materialauswahl")
         g_boxWidget = QGroupBox("Geometrieeingabe")
 
@@ -22,8 +24,6 @@ class StackOne(QWidget):
         g_layoutTrag = QHBoxLayout() 
         g_layoutLaen = QHBoxLayout() 
 
-
-        
         self.label_lt_l = QLabel("Überbau Elementlänge")
         self.lt_l = 5.0
         lst = np.arange(3.50, 10.0, 0.50).tolist()
@@ -66,7 +66,7 @@ class StackOne(QWidget):
 
         self.label_tb_t = QLabel("Tragbelagdicke")
         self.tb_t = 0.12
-        lst = np.arange(0.04, 0.20, 0.02).tolist()
+        lst = np.arange(0.04, 0.32, 0.02).tolist()
         lst = ["{:.2f}".format(x) for x in lst]
         self.com_tb_t = QComboBox()
         self.com_tb_t.addItems(lst)
@@ -105,7 +105,7 @@ class StackOne(QWidget):
         g_grid.addWidget(QLabel("[m]"), 3, 6)
 
         self.key_list = {
-            'lt_t': self.com_lt_l,
+            'lt_l': self.com_lt_l,
             'lt_n': self.com_lt_n,
             'lt_h': self.com_lt_h,
             'lt_b': self.com_lt_b,
@@ -123,33 +123,31 @@ class StackOne(QWidget):
         self.gp_h = 0.10
         self.gp_t = 0.04
 
-
         self.m_trag = "c14"
         self.m_laen = "c24"
-
 
         labelTrag = QLabel("Material Tragbelag: ")
         labelTrag.setFixedWidth(65)
         labelLaen = QLabel("Material Längsträger: ")
         labelLaen.setFixedWidth(65)
 
-        self.m_comboBoxTrag = QComboBox()
-        self.m_comboBoxLaen = QComboBox()
+        self.com_m_trag = QComboBox()
+        self.com_m_laen = QComboBox()
         
-        self.m_comboBoxTrag.addItems(["c14", "c20", "c24", "c30"])
-        self.m_comboBoxLaen.addItems(["c20", "c24", "c30"]) # , "s235", "s355"])
+        self.com_m_trag.addItems(["c14", "c16", "c20", "c24", "c30"])
+        self.com_m_laen.addItems(["c14", "c16", "c20", "c24", "c30"]) # , "s235", "s355"])
 
         
         self.buttenTrag = QPushButton("Parameter anzeigen")
         self.buttenLaen = QPushButton("Parameter anzeigen")
 
         m_layoutTrag.addWidget(labelTrag)
-        m_layoutTrag.addWidget(self.m_comboBoxTrag)
+        m_layoutTrag.addWidget(self.com_m_trag)
         m_layoutTrag.addStretch(1)
         m_layoutTrag.addWidget(self.buttenTrag,  alignment = Qt.AlignRight)
 
         m_layoutLaen.addWidget(labelLaen)
-        m_layoutLaen.addWidget(self.m_comboBoxLaen)
+        m_layoutLaen.addWidget(self.com_m_laen)
         m_layoutLaen.addStretch(1)
         m_layoutLaen.addWidget(self.buttenLaen, alignment = Qt.AlignRight)
 
@@ -162,7 +160,6 @@ class StackOne(QWidget):
         g_boxWidget.setLayout(g_grid)
         main.addWidget(g_boxWidget)
 
-
         self.setLayout(main)
 
         # SIGNALS
@@ -170,37 +167,43 @@ class StackOne(QWidget):
         for key, arg in self.key_list.items():
             arg.currentTextChanged.connect(self.gComboboxChanged)
 
-        self.m_comboBoxTrag.currentTextChanged.connect(lambda s : self.mComboboxChanged(s, "trag"))
-        self.m_comboBoxLaen.currentTextChanged.connect(lambda s : self.mComboboxChanged(s, "laen"))
-        # self.g_comboBoxTrag.currentTextChanged.connect(lambda s : self.gComboboxChanged(s, "trag"))
-        # self.g_comboBoxLaen.currentTextChanged.connect(lambda s : self.gComboboxChanged(s, "laen"))
+        self.com_m_trag.currentTextChanged.connect(lambda s : self.mComboboxChanged(s, "trag"))
+        self.com_m_laen.currentTextChanged.connect(lambda s : self.mComboboxChanged(s, "laen"))
+
         self.buttenTrag.pressed.connect(lambda : self.show_popup("trag"))
         self.buttenLaen.pressed.connect(lambda : self.show_popup("laen"))
 
-        index = self.m_comboBoxTrag.findText("C14", Qt.MatchFixedString)
-        self.m_comboBoxTrag.setCurrentIndex(index) # Set default material to C14
-        index = self.m_comboBoxLaen.findText("C24", Qt.MatchFixedString)
-        self.m_comboBoxLaen.setCurrentIndex(index) # Set default material to C24
-        # self.g_comboBoxTrag.setCurrentIndex(2) # Set default index to 0 ( triggers refersh of the model)
-        # self.g_comboBoxLaen.setCurrentIndex(5) # Set default index to 0 ( triggers refersh of the model)
+        index = self.com_m_trag.findText("C14", Qt.MatchFixedString)
+        self.com_m_trag.setCurrentIndex(index) # Set default material to C14
+        index = self.com_m_laen.findText("C24", Qt.MatchFixedString)
+        self.com_m_laen.setCurrentIndex(index) # Set default material to C24
+
+        # Set currend Index
+        self.com_m_trag.setCurrentIndex(1)
+        self.com_m_laen.setCurrentIndex(3)
+        self.com_lt_n.setCurrentIndex(6)
+        self.com_lt_h.setCurrentIndex(6)
+        self.com_lt_b.setCurrentIndex(4)
+        self.com_tb_t.setCurrentIndex(3)
+        self.com_fb_t.setCurrentIndex(1)
+        self.com_rb_h.setCurrentIndex(5)
+        self.com_rb_b.setCurrentIndex(5)
+
+
 
     def mComboboxChanged(self, signal, key):
         
         if key == "trag": 
-            self.m_trag = signal
-            print(self.m_trag)
+            self.g_model['m_tb'] = signal
         if key == "laen":
-            self.m_laen = signal
-            print(self.m_laen)
+            self.g_model['m_lt'] = signal
+
+        self.geometryChanged.emit("geometry changed")
 
     def gComboboxChanged(self):
 
-        self.g_model = dict()
-
         for key, arg in self.key_list.items():
             self.g_model[key] = arg.currentText()
-
-        print(self.g_model)
 
         self.geometryChanged.emit("geometry changed")
 
@@ -215,10 +218,10 @@ class StackOne(QWidget):
 
         if key == "trag":
             name = "Tragbelag"
-            material = self.m_trag
+            material = self.com_m_trag.currentText()
         if key == "laen":
             name = "Längsträger"
-            material = self.m_laen
+            material = self.com_m_laen.currentText()
 
         dialog = QDialog(self)
         dialog.setWindowTitle("Materialparameter %s" % name)
@@ -232,7 +235,7 @@ class StackOne(QWidget):
         head.addWidget(m_type)
         head.addStretch(1) 
 
-        for i, s in enumerate(key_list):
+        for i, s in enumerate(m_key_list):
             n = 0
             if i > 5:
                 n = 3
@@ -249,7 +252,6 @@ class StackOne(QWidget):
         layout.addLayout(grid)
 
         dialog.setLayout(layout)
-        # dialog.show()
         dialog.exec()
 
 
@@ -314,7 +316,7 @@ class TabWidget(QWidget):
 
 
 
-key_list = [
+m_key_list = [
     "fmk", "ft0k", "ft90k", "fc0k", "fc90k", "fvk", "e0mean", "e005", "e90mean", "gmean", "rok", "romean"
 ]
 unit_list = {
