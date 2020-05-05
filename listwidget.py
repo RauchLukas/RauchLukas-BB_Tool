@@ -60,8 +60,6 @@ class ListWidget(QWidget):
 
     def addListObject(self):
 
-        # TDOO cover case: input is str()
-
         x = self.geo_x.text()
         y = self.geo_y.text()
 

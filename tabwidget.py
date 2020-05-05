@@ -256,7 +256,6 @@ class StackOne(QWidget):
 
 
 
-
 class TabWidget(QWidget):
 
     def __init__(self):

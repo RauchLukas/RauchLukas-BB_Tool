@@ -22,7 +22,7 @@ class Graphics(QWidget):
         layout = QVBoxLayout()
         
         self.gradient = GGradient(self.nodes)
-        self.crosssec = GCrosssection(self.nodes)
+        self.crosssec = GCrosssection()
 
         layout.addWidget(self.gradient)
         layout.addWidget(self.crosssec)
@@ -39,8 +39,7 @@ class Graphics(QWidget):
 
         self.update()
 
-        self.gradient._triger_refresh(nodes, selection)
-        self.crosssec._triger_refresh(nodes, selection)
+        self.gradient._triger_refresh(self.nodes, selection)
 
 
 class GGradient(QWidget):
@@ -55,7 +54,7 @@ class GGradient(QWidget):
         )       
 
         self.support = nodes
-        self.nodes = []
+        self.nodes = nodes
 
         self.b = 600
         self.h = 250
@@ -85,8 +84,8 @@ class GGradient(QWidget):
         self.b = self.width()
         self.h = self.height()
 
-
         self.nodes = self.makeNodes(self.nodes)
+
         self.span = self.support[-1][0] - self.support[0][0]
         
         self.l = self.b - 2 * self.pad
@@ -171,12 +170,19 @@ class GGradient(QWidget):
         out = [self.support[0]]
         end = self.support[-1]
 
+        # Check if Nodelist is empty 
+        #   -> In case: make it [0,0]
         if nodelist == []:
             nodelist = out
         if nodelist == [[]]:
             nodelist = out
+        # If nodelist is NOT empty, but dose not has [0,0] in first place
+        #   -> Append it to [0,0]
         if nodelist[0][0] != 0: 
             out.extend(nodelist)
+        else: 
+        #   -> In Case nodelist has [0,0] just copy it
+            out = nodelist
         if out[-1][0] != end[0]: 
             out.append(end)
 
@@ -200,8 +206,9 @@ class GGradient(QWidget):
 
 
 class GCrosssection(QWidget):
-
-    def __init__(self, nodes, *args, **kwargs):
+    '''Class containing all functions for visualization of the crosssection plot Qwidget. '''
+    
+    def __init__(self, *args, **kwargs):
         super(GCrosssection, self).__init__(*args, **kwargs)
 
         self.setSizePolicy(
@@ -456,14 +463,6 @@ class GCrosssection(QWidget):
         self.labelWidget("Überbau Querschnitt")        
         self.painter.end()
 
-    def _triger_refresh(self, nodes, selection):
-
-        if nodes:
-            self.nodes = nodes
-        if selection:
-            self.selected_node = selection
-
-        self.update()
     
     def sizeHint(self):
         return QSize(self.b,self.h)
