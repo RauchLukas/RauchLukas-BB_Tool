@@ -7,7 +7,8 @@ class StackOne(QWidget):
 
     geometryChanged = pyqtSignal(str)
 
-    elementLengthChanged = pyqtSignal(str)
+    elementLengthChanged = pyqtSignal()
+    elementDistChanged = pyqtSignal(str)
 
     def __init__(self, *args, **kwargs):
         super(StackOne, self).__init__(*args, **kwargs)
@@ -20,7 +21,7 @@ class StackOne(QWidget):
         main = QVBoxLayout()
         m_grid = QVBoxLayout()
         g_grid = QGridLayout()
-        g_grid.setColumnMinimumWidth(3, 25)
+        g_grid.setColumnMinimumWidth(3, 30)
         m_layoutTrag = QHBoxLayout() 
         m_layoutLaen = QHBoxLayout() 
         g_layoutTrag = QHBoxLayout() 
@@ -35,6 +36,14 @@ class StackOne(QWidget):
         g_grid.addWidget(self.label_lt_l, 0, 0)
         g_grid.addWidget(self.com_lt_l, 0, 1)
         g_grid.addWidget(QLabel("[m]"), 0, 2)
+
+        self.com_lt_dist = QComboBox()
+        self.com_lt_dist.addItems(['symmetrisch', 'linear'])
+        mini_layout = QHBoxLayout()
+        mini_layout.addWidget(QLabel("[m]"))
+        mini_layout.addWidget(self.com_lt_dist)
+        g_grid.addLayout(mini_layout, 0, 2)
+
 
         self.label_lt_n = QLabel("Anzahl Längsträger")
         self.lt_n = 8
@@ -167,6 +176,7 @@ class StackOne(QWidget):
         # SIGNALS
 
         self.com_lt_l.currentTextChanged.connect(self.gElementChanged)
+        self.com_lt_dist.currentTextChanged.connect(self.gElementDistChanged)
                 
         for key, arg in self.key_list.items():
             arg.currentTextChanged.connect(self.gComboboxChanged)
@@ -196,9 +206,12 @@ class StackOne(QWidget):
 
     def gElementChanged(self):
 
-        self.element_length = self.com_lt_l.currentText()
+        self.elementLengthChanged.emit()
 
-        self.elementLengthChanged.emit(self.element_length)
+    def gElementDistChanged(self):
+        element_dist = self.com_lt_dist.currentText()
+
+        self.elementDistChanged.emit(element_dist)
 
     def gComboboxChanged(self):
 

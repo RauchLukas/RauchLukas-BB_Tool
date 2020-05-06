@@ -45,8 +45,7 @@ class bbToolUi(QWidget):
         self.stackwidget._createStackWidget()
         self.stackwidget.placeWidget(self.layoutLeft)
 
-        self._graphic = gw.Graphics(self.supports)     # retunrs a widget
-        _butten = QPushButton("random")
+        self._graphic = gw.Graphics(self.model)     # retunrs a widget
 
         # Signals
 
@@ -58,11 +57,11 @@ class bbToolUi(QWidget):
         self.listwidget.clickedDelButten.connect(self._trigger_refresh_item)
         self.listwidget.clickedlistItem.connect(self._trigger_refresh_item)
 
-        self.stackwidget.tab_1.elementLengthChanged.connect(self.sPrint)
+        self.stackwidget.tab_1.elementLengthChanged.connect(self._triger_refresh_system)
+        self.stackwidget.tab_1.elementDistChanged.connect(self._triger_refresh_system_dist)
         self.stackwidget.tab_1.geometryChanged.connect(self._trigger_refresh_geo)
 
         self.layoutRight.addWidget(self._graphic)
-        self.layoutRight.addWidget(_butten)
 
         self.frame.addLayout(self.layoutLeft)
         self.frame.addLayout(self.layoutRight)
@@ -70,19 +69,29 @@ class bbToolUi(QWidget):
         self.setLayout(self.frame)
 
     def _triger_refresh_system(self):
-        self.model.spacing = self.stackwidget.tab_1.com_lt_l.currentText()
+        self.model.spacing = float(self.stackwidget.tab_1.com_lt_l.currentText())
+        self.model._triger_refresh()
 
-        self._graphic.system._triger_refresh(self.model.spacing)
+        self._graphic.model = self.model
+        self._graphic.system._triger_refresh()
+    
+    def _triger_refresh_system_dist(self, s):
+        self.model.dist = s
+        self.model._triger_refresh()
+
+        self._graphic.model = self.model
+        self._graphic.system._triger_refresh()
 
     def _triger_refresh_load(self):
         self.load_model['mlc'] = self.mlc_class.currentText()
         self.load_model['lm1'] = self.lm1_class.checkState()
         
-    def _trigger_refresh_geo(self):     # TODO Hier gehts weiter
+    def _trigger_refresh_geo(self):
         
         self.geo_model = self.stackwidget.tab_1.getModel()
 
         self._graphic.crosssec._triger_refresh_model(self.geo_model)
+        self.model._triger_refresh()
 
     def _trigger_refresh_add(self):
 
@@ -90,6 +99,7 @@ class bbToolUi(QWidget):
             self.nodes[0]
             nodes = self.model.makeNodes(self.nodes)
             self._graphic._triger_refresh(nodes=nodes)
+            self.model._triger_refresh()
         except: 
             return
     

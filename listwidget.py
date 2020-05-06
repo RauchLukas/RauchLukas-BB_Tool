@@ -73,7 +73,7 @@ class ListWidget(QWidget):
                 x = float(x)
                 y = float(y)
 
-                if not self.supports[0][0] <= x <=  self.supports[-1][0]:
+                if not self.supports[0][0] <= x <=  self.supports[-1][0] or not 0 <= y <= 9:
 
                     self.geo_x.settext('')
                     self.geo_y.settext('')

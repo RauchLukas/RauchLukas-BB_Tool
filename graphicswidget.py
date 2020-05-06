@@ -9,7 +9,7 @@ import numpy as np
 
 class Graphics(QWidget):
 
-    def __init__(self, nodes, *args, **kwargs):
+    def __init__(self, model, *args, **kwargs):
         super(Graphics,self).__init__(*args, **kwargs)
 
         self.setSizePolicy(
@@ -17,14 +17,15 @@ class Graphics(QWidget):
             QSizePolicy.MinimumExpanding,
         )       
 
-        self.nodes = nodes
+        self.model = model
+        self.nodes = model.supports
+        self.spacing = model.spacing
 
         layout = QVBoxLayout()
         
-        self.gradient = GGradient(self.nodes)
+        self.gradient = GGradient(self.model)
         self.crosssec = GCrosssection()
-        self.system = GSystem()
-
+        self.system = GSystem(self.model)
         layout.addWidget(self.gradient)
         layout.addWidget(self.crosssec)
         layout.addWidget(self.system)
@@ -42,12 +43,13 @@ class Graphics(QWidget):
         self.update()
 
         self.gradient._triger_refresh(self.nodes, selection)
+        self.system._triger_refresh()
 
 
 class GSystem(QWidget):
     '''Class containing all functions for visualization of the static system Qwidget. '''
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self, model, *args, **kwargs):
         super(GSystem,self).__init__(*args, **kwargs)
 
         self.setSizePolicy(
@@ -55,24 +57,51 @@ class GSystem(QWidget):
             QSizePolicy.Expanding,
         )       
 
+        self.model = model
+        self.nodes = model.nodes
+        self.support = model.supports
+
         self.b = 600
         self.h = 250
-        self.pad = 20
+        self.pad = 50
 
+        self.gap = 10
+        
+        self.span = model.span
         self.spacing = 3.5
+        self.krag = model.krag
+
+        self.h_fac = 0.03
 
     def sizeHint(self):
         return QSize(self.b,self.h)
 
-    def _triger_refresh(self, spacing):
+    def _triger_refresh(self):
 
-        self.spacing = spacing
+        parent = self.parent()
+
+        self.nodes = parent.nodes
+        self.spacing = parent.spacing
+
+        self.update()
+
 
     def paintEvent(self, event):
         '''Painter function within the GUI loop. Calls all the necessary draw functions.'''
 
+        span = self.model.span
+        spacing = self.model.spacing
+
+        col_pos = self.model.col_pos
+        col_height = self.model.col_height
+
         self.b = self.width()
         self.h = self.height()
+
+        self.l = self.b - 2 * self.pad
+        self.fact = self.l / self.span
+        nn = self.h * 0.15      # TODO 
+        self.nn = nn            #TODO fix this
 
         self.painter = QPainter(self)
         brush = QBrush()
@@ -81,9 +110,151 @@ class GSystem(QWidget):
         rect = QRect(0, 0, self.painter.device().width(), self.painter.device().height())
         self.painter.fillRect(rect, brush)
 
+
+
+        self.drawGradientLines()
+
+        pen = self.painter.pen()
+        pen.setWidth(2)
+        pen.setColor(QColor('white'))
+        self.painter.setPen(pen)
+
+        for i in range(len(col_pos)-1):
+            self.painter.drawLine(
+                QPoint(int(col_pos[i] * self.fact + self.pad + self.gap/2), nn), 
+                QPoint(int(col_pos[i+1] * self.fact + self.pad - self.gap/2), nn))
+
+        pen.setWidth(1)
+        pen.setColor(QColor('red'))
+        self.painter.setPen(pen)
+
+        for i in range(len(col_pos)):
+            self.circle(col_pos[i]* self.fact + self.pad, nn, 3, self.painter)
+
+        self.sliderSupport(col_pos[-1]* self.fact + self.pad, nn, 3, self.h*self.h_fac, self.painter)
+        self.fixedSupport(col_pos[0]* self.fact + self.pad, nn, 3, self.h*self.h_fac, self.painter)
+
+        for i in range(len(col_pos)-2):
+            self.unterbau(col_pos[i+1]* self.fact + self.pad, nn, col_height[i+1] * self.fact ,3 , self.painter)
+        
         self.labelWidget()
 
         self.painter.end()
+    
+    def circle(self, x, y, r, painter):
+
+        x0 = x-r
+        y0 = y-r
+
+        painter.drawEllipse(x0, y0, 2*r, 2*r)
+
+    def sliderSupport(self, x, y, r, h, painter):
+
+        x0 = x
+        y0 = y+r
+
+        painter.drawLine(x0, y0, x0+h/2, y0+h)
+        painter.drawLine(x0, y0, x0-h/2, y0+h)
+        painter.drawLine(x0+h/2, y0+h, x0-h/2, y0+h)
+        painter.drawLine(x0+1.75*h/2, y0+1.50*h, x0-1.75*h/2, y0+h*1.50)
+
+    def fixedSupport(self, x, y, r, h, painter):
+
+        old_painter = painter
+
+        n = 4
+        b = 1.75*h/2
+
+        x0 = x
+        y0 = y+r
+
+        painter.drawLine(x0, y0, x0+h/2, y0+h)
+        painter.drawLine(x0, y0, x0-h/2, y0+h)
+        painter.drawLine(x0+h/2, y0+h, x0-h/2, y0+h)
+        painter.drawLine(x0+b, y0+1.50*h, x0-b, y0+h*1.50)
+
+        h1 = 0.5 * h
+        inc = b / n
+        
+        for i in range(n):
+            painter.drawLine(x0+-b+2*inc*i, y0+1.50*h+h1, x0+-b+2*inc*(i+1), y0+1.50*h)
+
+    def unterbau(self, x, y, h, r, painter): 
+        
+        painter_old = painter
+        pen = painter.pen()        
+        
+        x1 = x-self.krag * self.fact
+        x2 = x+self.krag * self.fact
+        y1 = y-r
+        y2 = y-r
+
+        pen.setColor(QColor('red'))
+        painter.setPen(pen)
+
+        self.circle(x1, y1+2*r, r, painter)
+        self.circle(x2, y2+2*r, r, painter)
+
+        if h != 0:
+            self.circle(x1, y1+r+h, r, painter)
+            self.circle(x2, y2+r+h, r, painter)
+            self.sliderSupport(x1, y1+2*r+h, r, self.h_fac*self.h, painter)
+            self.sliderSupport(x2, y2+2*r+h, r, self.h_fac*self.h, painter)
+        
+            pen.setColor(QColor('white'))
+            painter.setPen(pen)
+            painter.drawLine(x1, y1+r, x1, y1+h-1)
+            painter.drawLine(x2, y2+r, x2, y2+h-1)
+
+        else:
+            self.sliderSupport(x1, y1, r, self.h_fac*self.h, painter)
+            self.sliderSupport(x2, y2, r, self.h_fac*self.h, painter)
+
+    def drawGradientLines(self):
+        '''Function to draw the gradient lines of the global geography.'''
+                
+                
+        nodes = self.makeNodes(self.nodes)   
+
+        pen = self.painter.pen()
+        pen.setWidth(2)
+        pen.setColor(QColor(QColor('dark gray')))
+        self.painter.setPen(pen)
+
+        for i in range(len(nodes)-1):
+            self.painter.drawLine(
+                QPoint(int(nodes[i][0] * self.fact + self.pad),
+                    int(nodes[i][1] * self.fact + self.nn)),
+                QPoint(int(nodes[i+1][0] * self.fact + self.pad),
+                    int(nodes[i+1][1] * self.fact + self.nn)))
+
+    ### TODO dont copy this one from GGRadient
+    def makeNodes(self, nodelist):
+        '''Collecting the actual node list and the support coordinates making one sorted nodelist.'''
+
+        out = [self.support[0]]
+        end = self.support[-1]
+
+        # Check if Nodelist is empty 
+        #   -> In case: make it [0,0]
+        if nodelist == []:
+            nodelist = out
+        if nodelist == [[]]:
+            nodelist = out
+        # If nodelist is NOT empty, but dose not has [0,0] in first place
+        #   -> Append it to [0,0]
+        if nodelist[0][0] != 0: 
+            out.extend(nodelist)
+        else: 
+        #   -> In Case nodelist has [0,0] just copy it
+            out = nodelist
+        if out[-1][0] != end[0]: 
+            out.append(end)
+
+        out = sorted(out, key=lambda x: x[0] )
+
+        return out
+
 
     def labelWidget(self):
         '''Prints the label onto the widget.'''
@@ -103,7 +274,7 @@ class GSystem(QWidget):
 class GGradient(QWidget):
     '''Class containing all functions for visualization of the gradient Qwidget. '''
     
-    def __init__(self, nodes, *args, **kwargs):
+    def __init__(self, model, *args, **kwargs):
         super(GGradient,self).__init__(*args, **kwargs)
 
         self.setSizePolicy(
@@ -111,12 +282,13 @@ class GGradient(QWidget):
             QSizePolicy.Expanding,
         )       
 
-        self.support = nodes
-        self.nodes = nodes
+
+        self.support = model.supports
+        self.nodes = model.supports
 
         self.b = 600
         self.h = 250
-        self.pad = 20
+        self.pad = 50
 
         self.x = 200
         self.y = 200

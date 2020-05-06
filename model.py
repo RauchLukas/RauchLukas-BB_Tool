@@ -5,20 +5,45 @@ class Model():
     def __init__(self):
         super().__init__()
 
+        self.model = dict()
         self.nodes = []
-        self.support = []
+        self.supports = [[0,0], [30,0]]
 
         self.span = 30
-        self.spacing = 5
+        self.spacing = 3.50
 
         self.krag = 0.5
+        self.dist = 'symmetrisch'
+
+        self.makeNodes(self.nodes)
+        
+        self.col_pos = self.getPosColumn()
+        self.col_height = self.getBridgeHeight()
+
+
+    def _triger_refresh(self):
+
+        self.getPosColumn()
+        self.getBridgeHeight()
+
+        pass
+    
+    def getModel(self):
+
+        self.model['nodes'] = self.nodes
+        self.model['support'] = self.support
+        self.model['span'] = float(self.span)
+        self.model['spacing'] = float(self.spacing)
+        self.model['krag'] = self.krag
+       
+        return self.model
         
 
     def makeNodes(self, nodelist):
         '''Collecting the actual node list and the support coordinates making one sorted nodelist.'''
 
-        out = [self.support[0]]
-        end = self.support[-1]
+        out = [self.supports[0]]
+        end = self.supports[-1]
 
         # Check if Nodelist is empty 
         #   -> In case: make it [0,0]
@@ -54,27 +79,43 @@ class Model():
     def getPosColumn(self):
 
         span = self.span
-        spacing = self.spacing
+        spacing = float(self.spacing)
 
         n_full = int(span / spacing)
         self.n_fields = n_full + 1
 
-        res = 0.5 * (span - (n_full * spacing))
 
-        spur = res
-        vec = [0]
-
-        if res != 0:
-            vec.append(res)
         
-        for i in range(n_full):
-            spur += spacing
-            vec.append(spur)
-        
-        if res != 0:
-            vec.append(spur + res)
+        if self.dist == 'linear':
 
-        self.posColumn = vec
+            res = (span - (n_full * spacing))
+
+            spur = 0
+            vec = [0]
+
+            for i in range(n_full):
+                spur += spacing
+                vec.append(spur)
+            
+            if res != 0:
+                vec.append(spur + res)
+        else:
+            
+            res = 0.5 * (span - (n_full * spacing))
+            spur = res
+            vec = [0]
+
+            if res != 0:
+                vec.append(res)
+            
+            for i in range(n_full):
+                spur += spacing
+                vec.append(spur)
+            
+            if res != 0:
+                vec.append(spur + res)
+
+        self.col_pos = vec
         return vec
 
     def getBridgeHeight(self):
@@ -83,7 +124,7 @@ class Model():
 
         xp, fp = self.getNodesSeperated()
 
-        self.height = np.interp(xe, xp, fp)
+        self.col_height = np.interp(xe, xp, fp)
 
-        return self.height
+        return self.col_height
 
