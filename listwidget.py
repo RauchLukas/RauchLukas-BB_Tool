@@ -34,9 +34,9 @@ class ListWidget(QWidget):
         self.geo_y.setPlaceholderText("1.0 m")
         self.geo_add = QPushButton("Hinzufügen")
         self.geo_add.pressed.connect(self.addListObject)
-        self.geo_add.setFixedWidth(70)
+        self.geo_add.setMinimumWidth(70)
         self.geo_del = QPushButton("Löschen")
-        self.geo_del.setFixedWidth(70)
+        self.geo_del.setMinimumWidth(70)
         self.geo_del.pressed.connect(self.delListObject)
 
         row1.addStretch(1)

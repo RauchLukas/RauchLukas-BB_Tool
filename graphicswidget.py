@@ -265,10 +265,11 @@ class GSystem(QWidget):
 
         font = self.painter.font()
         font.setFamily('Latin')
-        font.setPointSize(10)
+        h = int(self.h / 25)
+        font.setPointSize(h)
         self.painter.setFont(font)
 
-        self.painter.drawText(5, 20, "Statisches System.")
+        self.painter.drawText(5, 2*h, "Statisches System.")
 
 
 class GGradient(QWidget):
@@ -426,12 +427,15 @@ class GGradient(QWidget):
         pen.setColor(QColor('gray'))
         self.painter.setPen(pen)
 
+        h = int(self.h / 25)
+        b = int(self.b / 120)
+
         font = self.painter.font()
         font.setFamily('Latin')
-        font.setPointSize(10)
+        font.setPointSize(h)
         self.painter.setFont(font)
 
-        self.painter.drawText(5, 20, "Geändegradiente.")
+        self.painter.drawText(b, 2*h, "Geändegradiente.")
 
 
 class GCrosssection(QWidget):
@@ -503,8 +507,6 @@ class GCrosssection(QWidget):
 
         self.hc = self.h * 0.7
         self.bc = self.b * 0.5
-
-        self.b_tot = self.b - 2 * self.pad
 
         self.b_tot = self.b - 2 * self.pad
 
@@ -703,18 +705,21 @@ class GCrosssection(QWidget):
         pen.setColor(QColor('gray'))
         self.painter.setPen(pen)
 
+        h = int(self.h / 25)
+        b = int(self.b / 120)
+
         font = self.painter.font()
         font.setFamily('Latin')
-        font.setPointSize(10)
+        font.setPointSize(h)
         self.painter.setFont(font)
 
-        self.painter.drawText(5, 20, s)
+        self.painter.drawText(b, 2*h, s)
        
-        font.setPointSize(8)
+        font.setPointSize(int(self.h / 30))
         self.painter.setFont(font)
         m_tb = self.model['m_tb']
         m_lt = self.model['m_lt']
         s1 = f"Material Tragbelag:   {m_tb}"
         s2 = f"Material Längsträger: {m_lt}"
-        self.painter.drawText(self.b-130, 18, s1)
-        self.painter.drawText(self.b-130, 35, s2)
+        self.painter.drawText(self.b-self.b/4, 1.5*h, s1)
+        self.painter.drawText(self.b-self.b/4, 3*h, s2)
