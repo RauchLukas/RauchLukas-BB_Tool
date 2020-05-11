@@ -1,10 +1,13 @@
 from PyQt5.QtWidgets import QApplication
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QVBoxLayout
+from PyQt5.QtGui import QGuiApplication
+from PyQt5.QtCore import Qt
 
 import sys
 import ui
 import graphicswidget as gw
+
 
 class Main(QtWidgets.QMainWindow):
 

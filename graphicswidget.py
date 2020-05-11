@@ -110,8 +110,6 @@ class GSystem(QWidget):
         rect = QRect(0, 0, self.painter.device().width(), self.painter.device().height())
         self.painter.fillRect(rect, brush)
 
-
-
         self.drawGradientLines()
 
         pen = self.painter.pen()
@@ -265,7 +263,7 @@ class GSystem(QWidget):
 
         font = self.painter.font()
         font.setFamily('Latin')
-        h = int(self.h / 25)
+        h = int(self.h / 30)
         font.setPointSize(h)
         self.painter.setFont(font)
 
@@ -427,7 +425,7 @@ class GGradient(QWidget):
         pen.setColor(QColor('gray'))
         self.painter.setPen(pen)
 
-        h = int(self.h / 25)
+        h = int(self.h / 30)
         b = int(self.b / 120)
 
         font = self.painter.font()
@@ -701,11 +699,23 @@ class GCrosssection(QWidget):
     def labelWidget(self, s):
         '''Prints the label onto the widget.'''
 
+        import ctypes
+        user32 = ctypes.windll.user32
+        screensize = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
+
+        h = self.height()
+        b = self.width()
+
+        fac = h / screensize[1] 
+
+        h_text = int(0.05 * h)
+        h_text2 = int(h_text*0.8)
+
         pen = self.painter.pen()
         pen.setColor(QColor('gray'))
         self.painter.setPen(pen)
 
-        h = int(self.h / 25)
+        h = int(self.h / 30)
         b = int(self.b / 120)
 
         font = self.painter.font()
@@ -715,7 +725,7 @@ class GCrosssection(QWidget):
 
         self.painter.drawText(b, 2*h, s)
        
-        font.setPointSize(int(self.h / 30))
+        font.setPointSize(0.95*h)
         self.painter.setFont(font)
         m_tb = self.model['m_tb']
         m_lt = self.model['m_lt']

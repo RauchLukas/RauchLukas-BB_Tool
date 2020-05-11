@@ -9,7 +9,6 @@ import tabwidget as tw
 import graphicswidget as gw
 import model
 
-
 class bbToolUi(QWidget):
     '''bbTool's View (GUI)'''
     def __init__(self, *args, **kwargs):
@@ -29,12 +28,24 @@ class bbToolUi(QWidget):
         self.frame = QHBoxLayout()
         self.layoutLeft = QVBoxLayout()
         self.layoutRight = QVBoxLayout()
+        self.statusbar = QVBoxLayout()
         self._centralWidget = QWidget(self)
         self._centralWidget.setLayout(self.frame)
+        self._indicator = IndicatorWidget()
+        self._controll_unit = QHBoxLayout()
+
+        self.statusbar.addWidget(self._indicator)
+
+        self.save_button = QPushButton('Speichern')
+        self.print_button = QPushButton('Drucken')
+        self.random_button = QPushButton('Random')
+
+        self._controll_unit.addWidget(self.save_button)
+        self._controll_unit.addWidget(self.print_button)
+        self._controll_unit.addWidget(self.random_button)
 
         # Import the GUI modula
         self._createLoadWidget()
-
 
         self.listwidget = lw.ListWidget(self.nodes, self.supports)
 
@@ -49,6 +60,8 @@ class bbToolUi(QWidget):
 
         # Signals
 
+        self.random_button.pressed.connect(self._indicator._triger_refresh)
+
         self.mlc_class.currentTextChanged.connect(self._triger_refresh_load)
         self.lm1_class.stateChanged.connect(self._triger_refresh_load)
 
@@ -62,9 +75,11 @@ class bbToolUi(QWidget):
         self.stackwidget.tab_1.geometryChanged.connect(self._trigger_refresh_geo)
 
         self.layoutRight.addWidget(self._graphic)
+        self.layoutRight.addLayout(self._controll_unit)
 
         self.frame.addLayout(self.layoutLeft)
         self.frame.addLayout(self.layoutRight)
+        self.frame.addLayout(self.statusbar)
 
         self.setLayout(self.frame)
 
@@ -136,9 +151,46 @@ class bbToolUi(QWidget):
         self.load_model['mlc'] = self.mlc_class.currentText()
         self.load_model['lm1'] = self.lm1_class.checkState()
 
-        
     def sPrint(self, s):
         print(s)
 
+
+class IndicatorWidget(QWidget):
+ 
+    def __init__(self, *args, **kwargs):
+        super(IndicatorWidget,self).__init__(*args, **kwargs)
+
+        self.setSizePolicy(
+            QSizePolicy.Maximum,
+            QSizePolicy.MinimumExpanding,
+        )     
+
+        self.color = ['green','red']  
+
+        self.h = 300
+        self.b = 100
+
+        self.status = True
+
+    def sizeHint(self):
+        return QSize(self.b,self.h)
+
+    def _triger_refresh(self):
+        self.status = random.getrandbits(1)
+
+        self.update()
+
+    def paintEvent(self, event):
+        '''Painter function within the GUI loop. Calls all the necessary draw functions.'''
+
+        self.painter = QPainter(self)
+        brush = QBrush()
+        brush.setColor(QColor(self.color[self.status]))
+        brush.setStyle(Qt.SolidPattern)
+        rect = QRect(0, 0, self.painter.device().width(), self.painter.device().height())
+        self.painter.fillRect(rect, brush)
+
+
+        self.painter.end()
 
 
