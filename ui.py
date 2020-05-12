@@ -8,6 +8,7 @@ import listwidget as lw
 import tabwidget as tw
 import graphicswidget as gw
 import model
+from core import Core
 
 class bbToolUi(QWidget):
     '''bbTool's View (GUI)'''
@@ -15,6 +16,7 @@ class bbToolUi(QWidget):
         super(bbToolUi, self).__init__(*args, **kwargs)
 
         self.model = model.Model()
+        self.core = Core(model=None)
 
         self.supports = [[0,0], [30,0]]
         self.model.support = self.supports
@@ -60,7 +62,7 @@ class bbToolUi(QWidget):
 
         # Signals
 
-        self.random_button.pressed.connect(self._indicator._triger_refresh)
+        self.random_button.pressed.connect(self._triger_refresh_status)
 
         self.mlc_class.currentTextChanged.connect(self._triger_refresh_load)
         self.lm1_class.stateChanged.connect(self._triger_refresh_load)
@@ -82,6 +84,10 @@ class bbToolUi(QWidget):
         self.frame.addLayout(self.statusbar)
 
         self.setLayout(self.frame)
+
+    def _triger_refresh_status(self):
+        status = self.core.design()
+        self._indicator._triger_refresh(status=status)
 
     def _triger_refresh_system(self):
         self.model.spacing = float(self.stackwidget.tab_1.com_lt_l.currentText())
@@ -167,16 +173,22 @@ class IndicatorWidget(QWidget):
 
         self.color = ['green','red']  
 
+        self.status = False
+
         self.h = 300
-        self.b = 100
+        self.b = 70
 
         self.status = True
 
     def sizeHint(self):
         return QSize(self.b,self.h)
 
-    def _triger_refresh(self):
-        self.status = random.getrandbits(1)
+    def _triger_refresh(self,status):
+        
+        if status <= 1: 
+            self.status = 0
+        else: 
+            self.status = 1
 
         self.update()
 
