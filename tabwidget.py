@@ -5,14 +5,16 @@ import numpy as np
 
 class StackOne(QWidget):
 
+    modelChanged = pyqtSignal()
     geometryChanged = pyqtSignal(str)
 
     elementLengthChanged = pyqtSignal()
     elementDistChanged = pyqtSignal(str)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, model, *args, **kwargs):
         super(StackOne, self).__init__(*args, **kwargs)
 
+        self.model = model
         self.g_model = dict()
 
         m_boxWidget = QGroupBox("Materialauswahl")
@@ -43,7 +45,6 @@ class StackOne(QWidget):
         mini_layout.addWidget(QLabel("[m]"))
         mini_layout.addWidget(self.com_lt_dist)
         g_grid.addLayout(mini_layout, 0, 2)
-
 
         self.label_lt_n = QLabel("Anzahl Längsträger")
         self.lt_n = 8
@@ -177,12 +178,17 @@ class StackOne(QWidget):
 
         self.com_lt_l.currentTextChanged.connect(self.gElementChanged)
         self.com_lt_dist.currentTextChanged.connect(self.gElementDistChanged)
+        self.com_lt_dist.currentTextChanged.connect(self.modelChanged)
                 
         for key, arg in self.key_list.items():
             arg.currentTextChanged.connect(self.gComboboxChanged)
+            arg.currentTextChanged.connect(self._modelChanged)
+
 
         self.com_m_trag.currentTextChanged.connect(lambda s : self.mComboboxChanged(s, "trag"))
+        self.com_m_trag.currentTextChanged.connect(self._modelChanged)
         self.com_m_laen.currentTextChanged.connect(lambda s : self.mComboboxChanged(s, "laen"))
+        self.com_m_laen.currentTextChanged.connect(self._modelChanged)
 
         self.buttenTrag.pressed.connect(lambda : self.show_popup("trag"))
         self.buttenLaen.pressed.connect(lambda : self.show_popup("laen"))
@@ -203,6 +209,21 @@ class StackOne(QWidget):
         self.com_rb_h.setCurrentIndex(5)
         self.com_rb_b.setCurrentIndex(5)
 
+    def _modelChanged(self):
+
+        self.model.updateMaterial('tb', self.com_m_trag.currentText())
+        self.model.updateMaterial('lt', self.com_m_laen.currentText())
+        # self.model.m_class_lt = self.com_m_laen.currentText()
+        self.model.lt_l = float(self.com_lt_l.currentText())
+        self.model.lt_n = float(self.com_lt_n.currentText())
+        self.model.lt_h = float(self.com_lt_h.currentText())
+        self.model.lt_b = float(self.com_lt_b.currentText())
+        self.model.tb_t = float(self.com_tb_t.currentText())
+        self.model.fb_t = float(self.com_fb_t.currentText())
+        self.model.rb_h = float(self.com_rb_h.currentText())
+        self.model.rh_b = float(self.com_rb_b.currentText())
+
+        self.modelChanged.emit()
 
     def gElementChanged(self):
 
@@ -281,9 +302,10 @@ class StackOne(QWidget):
 
 class TabWidget(QWidget):
 
-    def __init__(self):
+    def __init__(self, model):
         super().__init__()
 
+        self.model = model
 
     def _createStackWidget(self):
         
@@ -293,7 +315,7 @@ class TabWidget(QWidget):
         self.tab_1.layout = QVBoxLayout()
         self.tab_1.setLayout(self.tab_1.layout)
 
-        self.tab_1 = StackOne()
+        self.tab_1 = StackOne(self.model)
 
         self.tab_2 = QWidget()
         self.tab_2.layout = QVBoxLayout()

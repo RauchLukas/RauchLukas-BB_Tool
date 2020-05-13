@@ -281,6 +281,7 @@ class GGradient(QWidget):
             QSizePolicy.Expanding,
         )       
 
+        self.model = model
 
         self.support = model.supports
         self.nodes = model.supports
@@ -314,7 +315,7 @@ class GGradient(QWidget):
 
         self.nodes = self.makeNodes(self.nodes)
 
-        self.span = self.support[-1][0] - self.support[0][0]
+        self.span = self.model.span 
         
         self.l = self.b - 2 * self.pad
         self.fact = self.l / self.span
@@ -332,6 +333,41 @@ class GGradient(QWidget):
         self.drawGradientBridge()
         self.drawGradientPoints()
         self.drawGradientLines()
+
+        # Label Brückenspannweite
+        pen = self.painter.pen()
+        pen.setWidth(1)
+        pen.setColor(QColor('gray'))
+        self.painter.setPen(pen)
+
+        font = self.painter.font()
+        font.setFamily('Latin')
+        font.setPointSize(8)
+        self.painter.setFont(font)
+
+        self.painter.drawLine(
+            QPoint(
+            self.nodes[0][0] * self.fact + self.pad - self.h/50,
+            self.nodes[0][1] * self.fact + self.nn-self.h/15),
+            QPoint(
+            self.nodes[-1][0] * self.fact + self.pad + self.h/50,
+            self.nodes[-1][1] * self.fact + self.nn - self.h/15)
+        )
+
+        for i in range(2):
+            self.painter.drawLine(
+            QPoint(
+            (self.nodes[0][0] + self.span * i)  * self.fact + self.pad,
+            self.nn - 1.3*self.h/15),
+            QPoint(
+            (self.nodes[0][0] + self.span * i)  * self.fact + self.pad,
+            self.nn - 0.7*self.h/15),
+            )
+
+        self.painter.drawText(
+            QPointF(self.b/2-12, self.nn-self.h/10),
+            (f"{self.span:.2f}")
+        )
 
         self.painter.end()
 

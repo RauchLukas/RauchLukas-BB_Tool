@@ -11,55 +11,55 @@ eq_rad = pd.read_excel('eq_rad_stanag2021.xlsx', index_col=0)
 class Core():
     def __init__(self, model):
 
-        # self.model = model
+        self.model = model
 
         self.material = Material()
-
-        self.mlc = 40
-        self.l_lt = 4.0
-        self.n_lt = 5
-        self.h_lt = 0.30
-        self.b_lt = 0.20
-        self.t_tb = 0.06
-        self.b_ub = 5.5
-
-        # Material
-        self.nkl = 2
-        self.kled = 'k_sk'
-        self.m_type = 'vh'
-
-        m = self.material.wood('c24')
-
-        self.fmk = m['fmk']
-        self.ft0k = m['ft0k']
-        self.fvk = m['fvk']
-        self.gamma_h = 5.0
-        self.kmod = 1
-
+        
         # Berechnungsparameter
         self.gamma_g = 1.35
         self.gamma_mlc = 1.50
 
-        self.em_w = em_rad.loc[self.l_lt, 'mlc'+str(self.mlc)]
-        self.eq_w = eq_rad.loc[self.l_lt, 'mlc'+str(self.mlc)]
-        self.em_t = em_kette.loc[self.l_lt, 'mlc'+str(self.mlc)]
-        self.eq_t = eq_kette.loc[self.l_lt, 'mlc'+str(self.mlc)]
+        self.gamma_holz = 5.0
 
-        print(self.momentOfResistance())
-        print(self.shearOfResistance())
+        self.refreshModel()
 
+    def refreshModel(self):
+        self.mlc = self.model.mlc
+        self.lt_l = self.model.lt_l
+        self.lt_n = self.model.lt_n
+        self.lt_h = self.model.lt_h
+        self.lt_b = self.model.lt_b
+        self.tb_t = self.model.tb_t
+        self.ub_b = self.model.ub_b
 
-        print(self.design())
+        # Material
+        self.name = self.model.m_class_lt
+        self.nkl = self.model.m_lt_nkl
+        self.kled = self.model.m_lt_kled
+        self.m_type = self.model.m_lt_type
+
+        m = self.material.wood(self.name)
+
+        self.fmk = m['fmk']
+        self.ft0k = m['ft0k']
+        self.fvk = m['fvk']
+        self.kmod = self.material.kmod(self.nkl, self.kled)
+
+        self.em_w = em_rad.loc[self.lt_l, self.mlc]
+        self.eq_w = eq_rad.loc[self.lt_l, self.mlc]
+        self.em_t = em_kette.loc[self.lt_l, self.mlc]
+        self.eq_t = eq_kette.loc[self.lt_l, self.mlc]
+
 
     def Schwingungsbeiwert(self):
         
         kette = 1.10
         rad = 1.25
 
-        if self.l_lt < 0:
+        if self.lt_l < 0:
             raise ValueError("Fehler: Länge l < 0")
 
-        phi = 1.4 - self.l_lt * 8e-3
+        phi = 1.4 - self.lt_l * 8e-3
         if phi < 1: 
             phi = 1
 
@@ -70,10 +70,10 @@ class Core():
 
     def getSelfWeight(self): 
 
-        self.a_lt = self.h_lt * self.b_lt
-        self.a_ub = self.t_tb * self.b_ub
+        self.a_lt = self.lt_h * self.lt_b
+        self.a_ub = self.tb_t * self.ub_b
 
-        g = (self.a_lt + self.a_ub) * self.gamma_h      #kN/m
+        g = (self.a_lt + self.a_ub) * self.gamma_holz      #kN/m
 
         return g
 
@@ -81,13 +81,13 @@ class Core():
 
         g = self.getSelfWeight()
 
-        return g * self.l_lt**2 / 8
+        return g * self.lt_l**2 / 8
 
     def getShearSelfweight(self):
 
         g = self.getSelfWeight()
 
-        return g * self.l_lt / 2
+        return g * self.lt_l / 2
 
     def getMed(self):
 
@@ -100,7 +100,7 @@ class Core():
 
         m_ed = max(phi_w * m_kw, phi_t * m_kt)
 
-        m_ed = m_ed * self.l_lt
+        m_ed = m_ed * self.lt_l
 
         return m_g * self.gamma_g + m_ed * self.gamma_mlc
         
@@ -119,17 +119,19 @@ class Core():
 
     def getCrosssectionArea(self, n=1):
 
-        return n * self.h_lt * self.b_lt
+        return n * self.lt_h * self.lt_b
 
     def getCrosssectionWy(self, n=1):
                
-        return n * self.b_lt * self.h_lt**2 / 6
+        return n * self.lt_b * self.lt_h**2 / 6
 
     def momentOfResistance(self):
-        
+
+        self.fmk = self.model.m_lt['fmk']
+
         fmd = self.kmod * self.fmk
 
-        wy = self.getCrosssectionWy(self.n_lt)
+        wy = self.getCrosssectionWy(self.lt_n)
 
         return wy * fmd * 1e+3    # kNm 
 
@@ -141,11 +143,15 @@ class Core():
 
         ft0d = kmod * kcr * self.ft0k
 
-        a = self.getCrosssectionArea(self.n_lt)
+        a = self.getCrosssectionArea(self.lt_n)
 
         return a * ft0d / 1.5 * 1e+3    # kN 
 
-    def design(self): 
+
+
+    def design(self, model): 
+        
+        self.refreshModel()
 
         mEd = self.getMed()
         vEd = self.getVed()
@@ -153,11 +159,12 @@ class Core():
         mRd = self.momentOfResistance()
         vRd = self.shearOfResistance()
 
-        nu = math.sqrt((mEd/mRd)**2 + (vEd/vRd)**2)
+        nu_m = mEd/mRd
+        nu_v = vEd/vRd
 
-        return nu
+        print(f"\nAusnutungsgrade: \nMoment: {nu_m:.2f} \nQuerkraft: {nu_v:.2f}")
 
-        
+        return nu_m
 
 
 # if __name__ == "__main__":

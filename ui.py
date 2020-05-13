@@ -7,7 +7,7 @@ import random
 import listwidget as lw
 import tabwidget as tw
 import graphicswidget as gw
-import model
+from model import Model
 from core import Core
 
 class bbToolUi(QWidget):
@@ -15,8 +15,8 @@ class bbToolUi(QWidget):
     def __init__(self, *args, **kwargs):
         super(bbToolUi, self).__init__(*args, **kwargs)
 
-        self.model = model.Model()
-        self.core = Core(model=None)
+        self.model = Model()
+        self.core = Core(model=self.model)
 
         self.supports = [[0,0], [30,0]]
         self.model.support = self.supports
@@ -33,28 +33,28 @@ class bbToolUi(QWidget):
         self.statusbar = QVBoxLayout()
         self._centralWidget = QWidget(self)
         self._centralWidget.setLayout(self.frame)
-        self._indicator = IndicatorWidget()
+        self._indicator = IndicatorWidget(self.model)
         self._controll_unit = QHBoxLayout()
 
         self.statusbar.addWidget(self._indicator)
 
         self.save_button = QPushButton('Speichern')
         self.print_button = QPushButton('Drucken')
-        self.random_button = QPushButton('Random')
+        self.calc_button = QPushButton('Berechnen')
 
         self._controll_unit.addWidget(self.save_button)
         self._controll_unit.addWidget(self.print_button)
-        self._controll_unit.addWidget(self.random_button)
+        self._controll_unit.addWidget(self.calc_button)
 
         # Import the GUI modula
         self._createLoadWidget()
 
-        self.listwidget = lw.ListWidget(self.nodes, self.supports)
+        self.listwidget = lw.ListWidget(self.nodes, self.model.supports)
 
         self.listwidget._createGeograpyWidget()
         self.listwidget.placeWidget(self.layoutLeft)
 
-        self.stackwidget = tw.TabWidget()
+        self.stackwidget = tw.TabWidget(self.model)
         self.stackwidget._createStackWidget()
         self.stackwidget.placeWidget(self.layoutLeft)
 
@@ -62,7 +62,7 @@ class bbToolUi(QWidget):
 
         # Signals
 
-        self.random_button.pressed.connect(self._triger_refresh_status)
+        self.calc_button.pressed.connect(self._triger_refresh_status)
 
         self.mlc_class.currentTextChanged.connect(self._triger_refresh_load)
         self.lm1_class.stateChanged.connect(self._triger_refresh_load)
@@ -75,6 +75,7 @@ class bbToolUi(QWidget):
         self.stackwidget.tab_1.elementLengthChanged.connect(self._triger_refresh_system)
         self.stackwidget.tab_1.elementDistChanged.connect(self._triger_refresh_system_dist)
         self.stackwidget.tab_1.geometryChanged.connect(self._trigger_refresh_geo)
+        self.stackwidget.tab_1.modelChanged.connect(self._triger_refresh_model)
 
         self.layoutRight.addWidget(self._graphic)
         self.layoutRight.addLayout(self._controll_unit)
@@ -85,8 +86,16 @@ class bbToolUi(QWidget):
 
         self.setLayout(self.frame)
 
+    def _triger_refresh_model(self):
+        self._triger_refresh_status()
+
+        self.update()
+
+
     def _triger_refresh_status(self):
-        status = self.core.design()
+        geo_model = self.stackwidget.tab_1.getModel()
+
+        status = self.core.design(geo_model)
         self._indicator._triger_refresh(status=status)
 
     def _triger_refresh_system(self):
@@ -154,8 +163,17 @@ class bbToolUi(QWidget):
         group.setLayout(layout)
         self.layoutLeft.addWidget(group)
 
+        self.mlc_class.currentTextChanged.connect(self.loadClassChanged)
+        self.lm1_class.stateChanged.connect(self.loadClassChanged)
+
         self.load_model['mlc'] = self.mlc_class.currentText()
         self.load_model['lm1'] = self.lm1_class.checkState()
+
+    def loadClassChanged(self):
+        self.model.mlc = self.mlc_class.currentText()
+        self.model.lm1 = self.lm1_class.checkState()
+
+        self._triger_refresh_model()
 
     def sPrint(self, s):
         print(s)
@@ -163,7 +181,7 @@ class bbToolUi(QWidget):
 
 class IndicatorWidget(QWidget):
  
-    def __init__(self, *args, **kwargs):
+    def __init__(self, model, *args, **kwargs):
         super(IndicatorWidget,self).__init__(*args, **kwargs)
 
         self.setSizePolicy(
@@ -178,6 +196,7 @@ class IndicatorWidget(QWidget):
         self.h = 300
         self.b = 70
 
+        self.model = model
         self.status = True
 
     def sizeHint(self):
@@ -201,7 +220,6 @@ class IndicatorWidget(QWidget):
         brush.setStyle(Qt.SolidPattern)
         rect = QRect(0, 0, self.painter.device().width(), self.painter.device().height())
         self.painter.fillRect(rect, brush)
-
 
         self.painter.end()
 
