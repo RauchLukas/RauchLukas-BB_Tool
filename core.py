@@ -17,9 +17,9 @@ class Core():
         
         # Berechnungsparameter
         self.gamma_g = 1.35
-        self.gamma_gm = 1.30
         self.gamma_mlc = 1.50
 
+        self.gamma_m = 1.3
         self.gamma_holz = 5.0
 
         self.refreshModel()
@@ -50,7 +50,6 @@ class Core():
         self.eq_w = eq_rad.loc[self.lt_l, self.mlc]
         self.em_t = em_kette.loc[self.lt_l, self.mlc]
         self.eq_t = eq_kette.loc[self.lt_l, self.mlc]
-
 
     def Schwingungsbeiwert(self):
         
@@ -90,7 +89,7 @@ class Core():
 
         return g * self.lt_l / 2
 
-    def getMed(self):
+    def getMed(self):       # Design Value
 
         phi_w, phi_t = self.Schwingungsbeiwert()
 
@@ -105,7 +104,7 @@ class Core():
 
         return m_g * self.gamma_g + m_ed * self.gamma_mlc
         
-    def getVed(self):
+    def getVed(self):       # Design Value
 
         phi_w, phi_t = self.Schwingungsbeiwert()
 
@@ -130,7 +129,7 @@ class Core():
 
         self.fmk = self.model.m_lt['fmk']
 
-        fmd = self.kmod * self.fmk / self.gamma_gm
+        fmd = self.kmod * self.fmk / self.gamma_m
 
         wy = self.getCrosssectionWy(self.lt_n)
 
@@ -142,31 +141,11 @@ class Core():
 
         kmod = self.material.kmod(self.nkl, self.kled)
 
-        ft0d = kmod * kcr * self.ft0k / self.gamma_gm
+        ft0d = kmod * kcr * self.ft0k / self.gamma_m
 
         a = self.getCrosssectionArea(self.lt_n)
 
         return a * ft0d / 1.5 * 1e+3    # kN 
-
-    def auflagerpressung(self, b):
-
-        kmod = self.material.kmod(self.nkl, self.kled)
-
-        self.fc90k = self.model.m_lt['fc90k']
-
-        fc90d = kmod * self.fc90k / self.gamma_gm
-
-        kc90 = 1.25     
-        '''
-        Annahme: 
-            1. Schellendruck statt Auflagerdruck. Die Funktion wird für beides gleich verwendet. 
-            2. Abstand zwischen zwei Lagern ist größer als die doppelte Auflagerbreite.
-        '''
-        a = b * (b + 2*0.03)     # in [m]
-
-        rd = a * kc90 * fc90d * 1e3     # in kN 
-
-        return rd
 
     def design(self, model): 
         
@@ -177,15 +156,13 @@ class Core():
 
         mRd = self.momentOfResistance()
         vRd = self.shearOfResistance()
-        aRd = self.auflagerpressung(self.lt_b)
 
-        nu_m = mEd/mRd              # Biegenachweis Längsträger
-        nu_v = vEd/vRd              # Querkraftnachweis Längsträger
-        nu_a = vEd/aRd/self.lt_n  # Auflagerpressung Längsträger
+        nu_m = mEd/mRd
+        nu_v = vEd/vRd
 
-        print(f"\nAusnutungsgrade: \nMoment: {nu_m:.2f} \nQuerkraft: {nu_v:.2f} \nAuflagerpressung: {nu_a:.2f}")
+        print(f"\nAusnutungsgrade: \nMoment: {nu_m:.2f} \nQuerkraft: {nu_v:.2f}")
 
-        return max(nu_m, nu_v, nu_a)
+        return nu_m
 
 
 # if __name__ == "__main__":
