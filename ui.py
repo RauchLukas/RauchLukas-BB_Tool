@@ -89,6 +89,7 @@ class bbToolUi(QWidget):
     def _triger_refresh_model(self):
         self._triger_refresh_status()
 
+        self._trigger_refresh_geo()
         self.update()
 
 
@@ -117,11 +118,9 @@ class bbToolUi(QWidget):
         self.load_model['lm1'] = self.lm1_class.checkState()
         
     def _trigger_refresh_geo(self):
-        
-        self.geo_model = self.stackwidget.tab_1.getModel()
 
-        self._graphic.crosssec._triger_refresh_model(self.geo_model)
         self.model._triger_refresh()
+        self._graphic.crosssec._triger_refresh_model()
 
     def _trigger_refresh_add(self):
 
@@ -170,7 +169,7 @@ class bbToolUi(QWidget):
         self.load_model['lm1'] = self.lm1_class.checkState()
 
     def loadClassChanged(self):
-        self.model.mlc = self.mlc_class.currentText()
+        self.model.setmlc(self.mlc_class.currentText())
         self.model.lm1 = self.lm1_class.checkState()
 
         self._triger_refresh_model()

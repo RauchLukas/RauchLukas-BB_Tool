@@ -27,11 +27,8 @@ class Main(QtWidgets.QMainWindow):
         self.setCentralWidget(w)
         self.show()
 
-
-
 if __name__ == '__main__':
     # Main()
-    print("Hello UI. Init start sequence.")
     app = QApplication([])
     mainwindow = Main()
 

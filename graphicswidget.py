@@ -24,7 +24,7 @@ class Graphics(QWidget):
         layout = QVBoxLayout()
         
         self.gradient = GGradient(self.model)
-        self.crosssec = GCrosssection()
+        self.crosssec = GCrosssection(self.model)
         self.system = GSystem(self.model)
         layout.addWidget(self.gradient)
         layout.addWidget(self.crosssec)
@@ -32,7 +32,6 @@ class Graphics(QWidget):
 
         self.setLayout(layout)
         
-
     def _triger_refresh(self, nodes=None, selection=None):
 
         if nodes:
@@ -46,7 +45,35 @@ class Graphics(QWidget):
         self.system._triger_refresh()
 
 
-class GSystem(QWidget):
+class GraphicTools():
+
+    def makeNodes(self, nodelist):
+        '''Collecting the actual node list and the support coordinates making one sorted nodelist.'''
+
+        out = [self.support[0]]
+        end = self.support[-1]
+
+        # Check if Nodelist is empty 
+        #   -> In case: make it [0,0]
+        if nodelist == []:
+            nodelist = out
+        if nodelist == [[]]:
+            nodelist = out
+        # If nodelist is NOT empty, but dose not has [0,0] in first place
+        #   -> Append it to [0,0]
+        if nodelist[0][0] != 0: 
+            out.extend(nodelist)
+        else: 
+        #   -> In Case nodelist has [0,0] just copy it
+            out = nodelist
+        if out[-1][0] != end[0]: 
+            out.append(end)
+
+        out = sorted(out, key=lambda x: x[0] )
+
+        return out
+
+class GSystem(QWidget, GraphicTools):
     '''Class containing all functions for visualization of the static system Qwidget. '''
     
     def __init__(self, model, *args, **kwargs):
@@ -66,25 +93,23 @@ class GSystem(QWidget):
         self.pad = 50
 
         self.gap = 10
-        
-        self.span = model.span
-        self.spacing = 3.5
-        self.krag = model.krag
-
         self.h_fac = 0.03
+
+        self._updateClass()
+
+    def _updateClass(self):
+        self.span = self.model.span
+        self.spacing = self.model.spacing
+        self.krag = self.model.krag
 
     def sizeHint(self):
         return QSize(self.b,self.h)
 
     def _triger_refresh(self):
 
-        parent = self.parent()
-
-        self.nodes = parent.nodes
-        self.spacing = parent.spacing
+        self._updateClass()
 
         self.update()
-
 
     def paintEvent(self, event):
         '''Painter function within the GUI loop. Calls all the necessary draw functions.'''
@@ -211,7 +236,6 @@ class GSystem(QWidget):
     def drawGradientLines(self):
         '''Function to draw the gradient lines of the global geography.'''
                 
-                
         nodes = self.makeNodes(self.nodes)   
 
         pen = self.painter.pen()
@@ -225,34 +249,6 @@ class GSystem(QWidget):
                     int(nodes[i][1] * self.fact + self.nn)),
                 QPoint(int(nodes[i+1][0] * self.fact + self.pad),
                     int(nodes[i+1][1] * self.fact + self.nn)))
-
-    ### TODO dont copy this one from GGRadient
-    def makeNodes(self, nodelist):
-        '''Collecting the actual node list and the support coordinates making one sorted nodelist.'''
-
-        out = [self.support[0]]
-        end = self.support[-1]
-
-        # Check if Nodelist is empty 
-        #   -> In case: make it [0,0]
-        if nodelist == []:
-            nodelist = out
-        if nodelist == [[]]:
-            nodelist = out
-        # If nodelist is NOT empty, but dose not has [0,0] in first place
-        #   -> Append it to [0,0]
-        if nodelist[0][0] != 0: 
-            out.extend(nodelist)
-        else: 
-        #   -> In Case nodelist has [0,0] just copy it
-            out = nodelist
-        if out[-1][0] != end[0]: 
-            out.append(end)
-
-        out = sorted(out, key=lambda x: x[0] )
-
-        return out
-
 
     def labelWidget(self):
         '''Prints the label onto the widget.'''
@@ -269,8 +265,7 @@ class GSystem(QWidget):
 
         self.painter.drawText(5, 2*h, "Statisches System.")
 
-
-class GGradient(QWidget):
+class GGradient(QWidget, GraphicTools):
     '''Class containing all functions for visualization of the gradient Qwidget. '''
     
     def __init__(self, model, *args, **kwargs):
@@ -428,32 +423,6 @@ class GGradient(QWidget):
                 QPoint(int(self.nodes[i+1][0] * self.fact + self.pad),
                     int(self.nodes[i+1][1] * self.fact + self.nn)))
 
-    def makeNodes(self, nodelist):
-        '''Collecting the actual node list and the support coordinates making one sorted nodelist.'''
-
-        out = [self.support[0]]
-        end = self.support[-1]
-
-        # Check if Nodelist is empty 
-        #   -> In case: make it [0,0]
-        if nodelist == []:
-            nodelist = out
-        if nodelist == [[]]:
-            nodelist = out
-        # If nodelist is NOT empty, but dose not has [0,0] in first place
-        #   -> Append it to [0,0]
-        if nodelist[0][0] != 0: 
-            out.extend(nodelist)
-        else: 
-        #   -> In Case nodelist has [0,0] just copy it
-            out = nodelist
-        if out[-1][0] != end[0]: 
-            out.append(end)
-
-        out = sorted(out, key=lambda x: x[0] )
-
-        return out
-
     def labelWidget(self):
         '''Prints the label onto the widget.'''
 
@@ -475,7 +444,7 @@ class GGradient(QWidget):
 class GCrosssection(QWidget):
     '''Class containing all functions for visualization of the crosssection plot Qwidget. '''
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self, model, *args, **kwargs):
         super(GCrosssection, self).__init__(*args, **kwargs)
 
         self.setSizePolicy(
@@ -483,30 +452,36 @@ class GCrosssection(QWidget):
             QSizePolicy.MinimumExpanding,
         )
 
+        self.model = model
+
         self.h = 250
         self.b = 600
         self.hc = self.h * 0.5
         self.bc = self.b * 0.5
         self.pad = 50
         self.nn = self.h * 0.3
+        
+        self._updateClass()
 
-        self.lr_b = 4.0
+    def _updateClass(self):
 
-        self.lt_n = 8
-        self.lt_h = 0.24
-        self.lt_b = 0.18
+        self.lr_b = self.model.lr_b
 
-        self.tb_t = 0.10
-        self.fb_t = 0.04
+        self.lt_n = self.model.lt_n
+        self.lt_h = self.model.lt_h
+        self.lt_b = self.model.lt_b
 
-        self.rb_h = 0.20
-        self.rb_b = 0.20
+        self.tb_t = self.model.tb_t
+        self.fb_t = self.model.fb_t
 
-        self.ub_krag = 1.0
+        self.rb_h = self.model.rb_h
+        self.rb_b = self.model.rb_b
+
+        self.ub_krag = self.model.ub_krag
         self.ub_b = self.lr_b + 2 * self.rb_b + 2 * self.ub_krag
         
-        self.gt_h = 1.00
-        self.gt_t = 0.08
+        self.gt_h = self.model.gt_h
+        self.gt_t = self.model.gt_t
         self.gt_d = self.gt_h * 0.7
         self.gt_b = self.gt_t
         self.alpha = 60
@@ -516,21 +491,10 @@ class GCrosssection(QWidget):
         self.b_tot = self.b - 2 * self.pad
         self.fact = self.b_tot / self.ub_b
 
-        self.model = dict()
-        self.model['m_tb'] = "c16"
-        self.model['m_lt'] = "c24"
 
-    def _triger_refresh_model(self, model):
+    def _triger_refresh_model(self):
 
-        self.model = model
-
-        for key, val in model.items():
-            try:
-                setattr(self, key, float(val))
-            except:
-                pass
-
-        self.ub_b = self.lr_b + 2 * self.rb_b + 2 * self.ub_krag
+        self._updateClass()
 
         self.update()
 
@@ -763,8 +727,8 @@ class GCrosssection(QWidget):
        
         font.setPointSize(0.95*h)
         self.painter.setFont(font)
-        m_tb = self.model['m_tb']
-        m_lt = self.model['m_lt']
+        m_tb = self.model.m_class_tb
+        m_lt = self.model.m_class_lt
         s1 = f"Material Tragbelag:   {m_tb}"
         s2 = f"Material Längsträger: {m_lt}"
         self.painter.drawText(self.b-self.b/4, 1.5*h, s1)

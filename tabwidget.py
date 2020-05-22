@@ -139,9 +139,9 @@ class StackOne(QWidget):
         self.m_laen = "c24"
 
         labelTrag = QLabel("Material Tragbelag: ")
-        labelTrag.setFixedWidth(65)
+        labelTrag.setMinimumWidth(110)
         labelLaen = QLabel("Material Längsträger: ")
-        labelLaen.setFixedWidth(65)
+        labelLaen.setMinimumWidth(110)
 
         self.com_m_trag = QComboBox()
         self.com_m_laen = QComboBox()
@@ -221,7 +221,7 @@ class StackOne(QWidget):
         self.model.tb_t = float(self.com_tb_t.currentText())
         self.model.fb_t = float(self.com_fb_t.currentText())
         self.model.rb_h = float(self.com_rb_h.currentText())
-        self.model.rh_b = float(self.com_rb_b.currentText())
+        self.model.rb_b = float(self.com_rb_b.currentText())
 
         self.modelChanged.emit()
 

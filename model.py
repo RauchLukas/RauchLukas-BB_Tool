@@ -7,7 +7,7 @@ class Model():
     def __init__(self):
         super().__init__()
 
-        self.mlc = 'MLC40'
+        self.mlc = 'MLC20'
         self.lm1 = False
 
         self.nodes = []
@@ -25,7 +25,7 @@ class Model():
         self.col_height = self.getBridgeHeight()
 
         # Presettings
-        self.lr_b = 4.0     #TODO fix by MLC 
+        self.lr_b = self.trackWidth(self.mlc)
         self.lt_l = 5.0
         self.lt_n = 8
         self.lt_h = 0.24
@@ -56,7 +56,6 @@ class Model():
         self.m_lt_kled = 'k_sk'
         self.m_lt_type = 'vh'
 
-
         self.m_class_tb = 'c24'
         self.m_tb = self.m_database.wood(self.m_class_tb)
         self.m_tb_nkl = 2
@@ -78,14 +77,38 @@ class Model():
             self.m_class_lt = mclass
             self.m_lt = self.m_database.wood(self.m_class_lt)
         if key == 'tb':
-            self.m_class_lt = mclass
+            self.m_class_tb = mclass
             self.m_tb = self.m_database.wood(self.m_class_tb)
-
 
     def _triger_refresh(self):
 
         self.getPosColumn()
         self.getBridgeHeight()
+
+    def trackWidth(self, mlc):
+
+        mlc_dic = {
+            'MLC20' : 20,
+            'MLC30' : 30,
+            'MLC40' : 40,
+            'MLC50' : 50,
+            'MLC60' : 60,
+            'MLC70' : 70,
+            'MLC80' : 80,
+        }
+        mlc = mlc_dic[mlc]
+
+        tw = 5.00
+
+        if mlc <= 100: tw = 4.50+0.3 
+        if mlc <= 70:  tw = 4.00+0.3 
+        if mlc <= 30:  tw = 3.35+0.3
+    
+        return tw
+
+    def setmlc(self, mlc): 
+        self.mlc = mlc
+        self.lr_b = self.trackWidth(mlc)
 
     def getModel(self):
 
@@ -97,7 +120,6 @@ class Model():
        
         return self.model
         
-
     def makeNodes(self, nodelist):
         '''Collecting the actual node list and the support coordinates making one sorted nodelist.'''
 
@@ -142,8 +164,6 @@ class Model():
 
         n_full = int(span / spacing)
         self.n_fields = n_full + 1
-
-
         
         if self.dist == 'linear':
 
@@ -186,4 +206,3 @@ class Model():
         self.col_height = np.interp(xe, xp, fp)
 
         return self.col_height
-
