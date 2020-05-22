@@ -147,6 +147,26 @@ class Core():
 
         return a * ft0d / 1.5 * 1e+3    # kN 
 
+    def auflagerpressung(self, b):
+
+        komd = self.material.kmod(self.nkl, self.kled)
+
+        self.fc90k = self.model.m_lt['fc90k']
+
+        fc90d = komd * self.fc90k / self.gamma_g
+
+        kc90 = 1.25 
+
+        '''
+        Annahme: 
+            1. Schwellendruck statt Auflagerdruck. Die Funktion wird für beides gleich verwendet.
+            2. Abstand zwischen zwei Lagern ist größer als die doppelte Auflagerbreite.
+        '''
+        a = b * (b + 2 * 0.03)          # in  [m]
+        rd = a * kc90 * fc90d * 1e3     # in kN 
+
+        return rd
+
     def design(self, model): 
         
         self.refreshModel()
@@ -156,11 +176,13 @@ class Core():
 
         mRd = self.momentOfResistance()
         vRd = self.shearOfResistance()
+        aRd = self.auflagerpressung(self.lt_b)
 
-        nu_m = mEd/mRd
-        nu_v = vEd/vRd
+        nu_m = mEd/mRd              # Biegenachweis Längsträger
+        nu_v = vEd/vRd              # Querkraftnachweis Längsträger
+        nu_a = vEd/aRd/self.lt_n    # Auflagerpressung Längsträger
 
-        print(f"\nAusnutungsgrade: \nMoment: {nu_m:.2f} \nQuerkraft: {nu_v:.2f}")
+        print(f"\nAusnutungsgrade: \nMoment: {nu_m:.2f} \nQuerkraft: {nu_v:.2f} \n Auflagerpressung {nu_a:.2f}")
 
         return nu_m
 
