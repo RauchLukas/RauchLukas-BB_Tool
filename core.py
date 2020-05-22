@@ -117,6 +117,25 @@ class Core():
 
         return q_g * self.gamma_g + q_ed * self.gamma_mlc
 
+    def getSurfaceShellLode(self):
+
+        b_ef = 1.0      # TODO Fix effektive Breite
+
+        phi_w, phi_t = self.Schwingungsbeiwert()
+
+        lt_a = self.ub_b / self.lt_n
+
+        mek_g = self.gamma_holz * b_ef * self.tb_t * a_lt**2 / 8
+        qek_g = self.gamma_holz * b_ef * self.tb_t * a_lt / 2
+
+        mek_mlc = mlc_single_wheeld[self.mlc] * lt_a**2 / 4
+        qek_mlc = mlc_single_wheeld[self.mlc] / 2
+
+        med = self.gamma_g * mek_g + self.gamma_mlc * mek_mlc
+        qed = self.gamma_g * qek_g + self.gamma_mlc * qek_mlc
+
+        return med, qed
+
     def getCrosssectionArea(self, n=1):
 
         return n * self.lt_h * self.lt_b
@@ -167,16 +186,33 @@ class Core():
 
         return rd
 
+    def surfaceCapacity(self):
+
+        kcr = self.material.kcr(self.fvk)
+
+        komd = self.material.kmod(self.nkl, self.kled)
+
+        ft0d = kmod * kcr * self.ft0k / self.gamma_m
+
+        fmd = self.kmod * self.fmk / self.gamma_m
+
+        # wy = 
+
+        # mRd =         # TODO Fix It
+
     def design(self, model): 
         
         self.refreshModel()
 
         mEd = self.getMed()
         vEd = self.getVed()
+        med, qed = self.getSurfaceShellLode()
 
         mRd = self.momentOfResistance()
         vRd = self.shearOfResistance()
         aRd = self.auflagerpressung(self.lt_b)
+
+
 
         nu_m = mEd/mRd              # Biegenachweis Längsträger
         nu_v = vEd/vRd              # Querkraftnachweis Längsträger
@@ -185,6 +221,9 @@ class Core():
         print(f"\nAusnutungsgrade: \nMoment: {nu_m:.2f} \nQuerkraft: {nu_v:.2f} \n Auflagerpressung {nu_a:.2f}")
 
         return nu_m
+
+
+mlc_single_wheeld = {'MLC20': 5.0, 'MLC30': 6.6,'MLC40': 7.7,'MLC50': 9.1,'MLC60': 10.4,'MLC70': 11.6,'MLC80': 12.7}
 
 
 # if __name__ == "__main__":
