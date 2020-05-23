@@ -18,8 +18,8 @@ class bbToolUi(QWidget):
         self.model = Model()
         self.core = Core(model=self.model)
 
-        self.supports = [[0,0], [30,0]]
-        self.model.support = self.supports
+        self.support = [[0,0], [30,0]]
+        self.model.support = self.support
         
         self.nodes = []
 
@@ -49,7 +49,7 @@ class bbToolUi(QWidget):
         # Import the GUI modula
         self._createLoadWidget()
 
-        self.listwidget = lw.ListWidget(self.nodes, self.model.supports)
+        self.listwidget = lw.ListWidget(self.nodes, self.model.support)
 
         self.listwidget._createGeograpyWidget()
         self.listwidget.placeWidget(self.layoutLeft)
@@ -96,7 +96,7 @@ class bbToolUi(QWidget):
     def _triger_refresh_status(self):
         geo_model = self.stackwidget.tab_1.getModel()
 
-        status = self.core.design(geo_model)
+        status = self.core.design()
         self._indicator._triger_refresh(status=status)
 
     def _triger_refresh_system(self):
@@ -126,7 +126,7 @@ class bbToolUi(QWidget):
 
         try:
             self.nodes[0]
-            nodes = self.model.makeNodes(self.nodes)
+            nodes = self.model.makeNodes(self.model.nodes)
             self._graphic._triger_refresh(nodes=nodes)
             self.model._triger_refresh()
         except: 
@@ -153,20 +153,65 @@ class bbToolUi(QWidget):
         self.lm1_class = QCheckBox(" LM1 (Zivil)")
         label = QLabel("Bemessungslastklassen: ")
 
+        length_label = QLabel("Überbaulänge")
+        self.length = QLineEdit()
+        self.length.setPlaceholderText("30.0 m")
+
         layout = QHBoxLayout()
         layout.addWidget(label)
         layout.addWidget(self.mlc_class)
         layout.addWidget(self.lm1_class)
+        layout.addWidget(length_label)
+        layout.addWidget(self.length)
         layout.addStretch(1)
 
         group.setLayout(layout)
         self.layoutLeft.addWidget(group)
+
+        self.length.editingFinished.connect(self._length_changed)
 
         self.mlc_class.currentTextChanged.connect(self.loadClassChanged)
         self.lm1_class.stateChanged.connect(self.loadClassChanged)
 
         self.load_model['mlc'] = self.mlc_class.currentText()
         self.load_model['lm1'] = self.lm1_class.checkState()
+
+    def _length_changed(self):
+        self.update_span()
+
+    def update_span(self):
+
+        try:
+            nx = float(self.length.text())
+        except:
+            self.length.clear()
+            
+        try: 
+            if 0 <= nx <= 40:
+
+                self.model.span = nx
+                self._update_nodes(nx)
+                
+            if nx > 40:
+                self.length.setText('40.0')
+            if nx < 0:
+                self.length.setText('0.0')
+                  
+        except:
+            pass
+
+    def _update_nodes(self, span):
+
+        for id, node in enumerate(self.model.nodes):
+            if node[0] >= span or node[0] >= self.model.support[1][0]:
+                del self.model.nodes[id]
+
+        self.model.nodes.append([span, 0])
+        self.model.support[1] = [span, 0]
+        
+
+        self._triger_refresh_model()
+        self._trigger_refresh_geo()
 
     def loadClassChanged(self):
         self.model.setmlc(self.mlc_class.currentText())
@@ -177,14 +222,13 @@ class bbToolUi(QWidget):
     def sPrint(self, s):
         print(s)
 
-
 class IndicatorWidget(QWidget):
  
     def __init__(self, model, *args, **kwargs):
         super(IndicatorWidget,self).__init__(*args, **kwargs)
 
         self.setSizePolicy(
-            QSizePolicy.Maximum,
+            QSizePolicy.Fixed,
             QSizePolicy.MinimumExpanding,
         )     
 

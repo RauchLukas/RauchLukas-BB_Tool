@@ -9,11 +9,11 @@ class ListWidget(QWidget):
     clickedDelButten = QtCore.pyqtSignal(int)
     clickedlistItem = QtCore.pyqtSignal(int)
 
-    def __init__(self, nodes, supports):
+    def __init__(self, nodes, support):
         super().__init__()
 
         self.nodes = nodes
-        self.supports = supports
+        self.support = support
 
     def _createGeograpyWidget(self):
         '''Creates the input widget for the global geography.'''
@@ -73,7 +73,7 @@ class ListWidget(QWidget):
                 x = float(x)
                 y = float(y)
 
-                if not self.supports[0][0] <= x <=  self.supports[-1][0] or not 0 <= y <= 9:
+                if not self.support[0][0] <= x <=  self.support[-1][0] or not 0 <= y <= 9:
 
                     self.geo_x.settext('')
                     self.geo_y.settext('')

@@ -18,7 +18,7 @@ class Graphics(QWidget):
         )       
 
         self.model = model
-        self.nodes = model.supports
+        self.nodes = model.support
         self.spacing = model.spacing
 
         layout = QVBoxLayout()
@@ -35,7 +35,7 @@ class Graphics(QWidget):
     def _triger_refresh(self, nodes=None, selection=None):
 
         if nodes:
-            self.nodes = nodes
+            self.nodes = self.model.nodes
         if selection:
             self.selected_node = selection
 
@@ -71,6 +71,8 @@ class GraphicTools():
 
         out = sorted(out, key=lambda x: x[0] )
 
+        print('mk nd list out', out)
+
         return out
 
 class GSystem(QWidget, GraphicTools):
@@ -86,7 +88,7 @@ class GSystem(QWidget, GraphicTools):
 
         self.model = model
         self.nodes = model.nodes
-        self.support = model.supports
+        self.support = model.support
 
         self.b = 600
         self.h = 250
@@ -98,6 +100,7 @@ class GSystem(QWidget, GraphicTools):
         self._updateClass()
 
     def _updateClass(self):
+        self.nodes = self.model.nodes
         self.span = self.model.span
         self.spacing = self.model.spacing
         self.krag = self.model.krag
@@ -124,7 +127,7 @@ class GSystem(QWidget, GraphicTools):
         self.h = self.height()
 
         self.l = self.b - 2 * self.pad
-        self.fact = self.l / self.span
+        self.fact = self.l / span
         nn = self.h * 0.15      # TODO 
         self.nn = nn            #TODO fix this
 
@@ -236,7 +239,7 @@ class GSystem(QWidget, GraphicTools):
     def drawGradientLines(self):
         '''Function to draw the gradient lines of the global geography.'''
                 
-        nodes = self.makeNodes(self.nodes)   
+        nodes = self.makeNodes(self.model.nodes)   
 
         pen = self.painter.pen()
         pen.setWidth(2)
@@ -278,8 +281,8 @@ class GGradient(QWidget, GraphicTools):
 
         self.model = model
 
-        self.support = model.supports
-        self.nodes = model.supports
+        self.support = model.support
+        self.nodes = model.support
 
         self.b = 600
         self.h = 250
@@ -293,7 +296,7 @@ class GGradient(QWidget, GraphicTools):
     def _triger_refresh(self, nodes, selection):
 
         if nodes:
-            self.nodes = nodes
+            self.nodes = self.model.nodes
         if selection:
             self.selected_node = selection
 
@@ -308,10 +311,16 @@ class GGradient(QWidget, GraphicTools):
         self.b = self.width()
         self.h = self.height()
 
-        self.nodes = self.makeNodes(self.nodes)
+        print('\n1 nodes ', self.nodes)
+
+
+        self.nodes = self.makeNodes(self.model.nodes)
 
         self.span = self.model.span 
-        
+
+        print('gdnt spn', self.span)
+        print('2 nodes', self.nodes)
+
         self.l = self.b - 2 * self.pad
         self.fact = self.l / self.span
         self.nn = self.h * 0.25
@@ -380,7 +389,7 @@ class GGradient(QWidget, GraphicTools):
                             self.nn + self.selected_node[1] * self.fact))
 
     def drawGradientBridge(self):
-        '''Function to draw the bridge gradient between the supports.'''
+        '''Function to draw the bridge gradient between the support.'''
 
         pen = self.painter.pen()
         pen.setWidth(3)
@@ -699,14 +708,14 @@ class GCrosssection(QWidget):
     def labelWidget(self, s):
         '''Prints the label onto the widget.'''
 
-        import ctypes
-        user32 = ctypes.windll.user32
-        screensize = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
+        # import ctypes
+        # user32 = ctypes.windll.user32
+        # screensize = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
 
         h = self.height()
         b = self.width()
 
-        fac = h / screensize[1] 
+        # fac = h / screensize[1] 
 
         h_text = int(0.05 * h)
         h_text2 = int(h_text*0.8)

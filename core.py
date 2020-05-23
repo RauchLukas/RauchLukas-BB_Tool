@@ -119,14 +119,14 @@ class Core():
 
     def getSurfaceShellLode(self):
 
-        b_ef = 1.0      # TODO Fix effektive Breite
+        self.b_ef = 1.0      # TODO Fix effektive Breite
 
         phi_w, phi_t = self.Schwingungsbeiwert()
 
         lt_a = self.ub_b / self.lt_n
 
-        mek_g = self.gamma_holz * b_ef * self.tb_t * a_lt**2 / 8
-        qek_g = self.gamma_holz * b_ef * self.tb_t * a_lt / 2
+        mek_g = self.gamma_holz * self.b_ef * self.tb_t * lt_a**2 / 8
+        qek_g = self.gamma_holz * self.b_ef * self.tb_t * lt_a / 2
 
         mek_mlc = mlc_single_wheeld[self.mlc] * lt_a**2 / 4
         qek_mlc = mlc_single_wheeld[self.mlc] / 2
@@ -190,37 +190,51 @@ class Core():
 
         kcr = self.material.kcr(self.fvk)
 
-        komd = self.material.kmod(self.nkl, self.kled)
+        kmod = self.material.kmod(self.nkl, self.kled)
 
-        ft0d = kmod * kcr * self.ft0k / self.gamma_m
+        fmk = self.model.m_tb['fmk']
+        ft0k = self.model.m_tb['ft0k']
 
-        fmd = self.kmod * self.fmk / self.gamma_m
+        ft0d = kmod * kcr * ft0k / self.gamma_m
 
-        # wy = 
+        fmd = self.kmod * fmk / self.gamma_m
 
-        # mRd =         # TODO Fix It
+        wy = self.b_ef * self.tb_t**2 / 6                # m4
 
-    def design(self, model): 
+        mRd = wy * fmd * 1e3                             # kNm 
+        vRd = self.b_ef * self.tb_t * ft0d / 1.5  *1e+3  # kN 
+
+        return mRd, vRd
+
+    def design(self): 
         
         self.refreshModel()
 
         mEd = self.getMed()
         vEd = self.getVed()
-        med, qed = self.getSurfaceShellLode()
+        med, ved = self.getSurfaceShellLode()       # kNm / kN 
 
         mRd = self.momentOfResistance()
         vRd = self.shearOfResistance()
         aRd = self.auflagerpressung(self.lt_b)
-
-
+        mrd, vrd = self.surfaceCapacity()
 
         nu_m = mEd/mRd              # Biegenachweis Längsträger
         nu_v = vEd/vRd              # Querkraftnachweis Längsträger
         nu_a = vEd/aRd/self.lt_n    # Auflagerpressung Längsträger
 
-        print(f"\nAusnutungsgrade: \nMoment: {nu_m:.2f} \nQuerkraft: {nu_v:.2f} \n Auflagerpressung {nu_a:.2f}")
+        nu_t_m = med/mrd            # Biegenachweis Tragbelag 
+        nu_t_v = ved/vrd            # Querkraftnach Tragbelag
+        
 
-        return nu_m
+        print(f"\nAusnutungsgrade: \nMoment: {nu_m:.2f} \nQuerkraft: {nu_v:.2f} \nAuflagerpressung {nu_a:.2f}")
+        print(f"Moment Tragbelag: {nu_t_m:.2f} \nQuerkraft Tragbelag: {nu_t_v:.2f}")
+
+        nu = max(nu_m, nu_v, nu_a, nu_t_m, nu_t_v)
+
+        print(f"Maximaler Ausnurtzungsgrad: nu = {nu:.2f}")
+
+        return nu
 
 
 mlc_single_wheeld = {'MLC20': 5.0, 'MLC30': 6.6,'MLC40': 7.7,'MLC50': 9.1,'MLC60': 10.4,'MLC70': 11.6,'MLC80': 12.7}
