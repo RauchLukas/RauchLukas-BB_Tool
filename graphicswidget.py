@@ -18,7 +18,7 @@ class Graphics(QWidget):
         )       
 
         self.model = model
-        self.nodes = model.support
+        self.nodes = model.supports
         self.spacing = model.spacing
 
         layout = QVBoxLayout()
@@ -50,30 +50,40 @@ class GraphicTools():
     def makeNodes(self, nodelist):
         '''Collecting the actual node list and the support coordinates making one sorted nodelist.'''
 
-        out = [self.support[0]]
-        end = self.support[-1]
+        # print('\nnodelist ', nodelist)
+        # print('self.model.support', self.model.supports)
 
-        # Check if Nodelist is empty 
-        #   -> In case: make it [0,0]
-        if nodelist == []:
-            nodelist = out
-        if nodelist == [[]]:
-            nodelist = out
-        # If nodelist is NOT empty, but dose not has [0,0] in first place
-        #   -> Append it to [0,0]
-        if nodelist[0][0] != 0: 
-            out.extend(nodelist)
-        else: 
-        #   -> In Case nodelist has [0,0] just copy it
-            out = nodelist
-        if out[-1][0] != end[0]: 
-            out.append(end)
+        try:
+            # nodelist = sorted(nodelist, key=lambda x: x[0] )
+            nodelist = ({k: v for k, v in sorted(nodelist.items(), key=lambda item: item[1])})      # sort the dict by x-val
+        except:
+            pass
 
-        out = sorted(out, key=lambda x: x[0] )
 
-        print('mk nd list out', out)
+        # out = [self.model.supports[0]]
+        # end = self.model.supports[-1]
 
-        return out
+        # # Check if Nodelist is empty 
+        # #   -> In case: make it [0,0]
+        # if nodelist == []:
+        #     nodelist = out
+        # if nodelist == [[]]:
+        #     nodelist = out
+        # # If nodelist is NOT empty, but dose not has [0,0] in first place
+        # #   -> Append it to [0,0]
+        # if nodelist[0][0] != 0: 
+        #     out.extend(nodelist)
+        # else: 
+        # #   -> In Case nodelist has [0,0] just copy it
+        #     out = nodelist
+        # if out[-1][0] != end[0]: 
+        #     out.append(end)
+
+        # out = sorted(out, key=lambda x: x[0] )
+
+        # print('makeNlist', out)
+
+        return nodelist
 
 class GSystem(QWidget, GraphicTools):
     '''Class containing all functions for visualization of the static system Qwidget. '''
@@ -88,7 +98,7 @@ class GSystem(QWidget, GraphicTools):
 
         self.model = model
         self.nodes = model.nodes
-        self.support = model.support
+        self.support = model.supports
 
         self.b = 600
         self.h = 250
@@ -246,12 +256,18 @@ class GSystem(QWidget, GraphicTools):
         pen.setColor(QColor(QColor('dark gray')))
         self.painter.setPen(pen)
 
-        for i in range(len(nodes)-1):
+        nodelist = list(self.model.nodes.keys())
+
+        for i in range(len(self.model.nodes)-1):
+
+            an = nodelist[i]
+            en = nodelist[i+1] 
+
             self.painter.drawLine(
-                QPoint(int(nodes[i][0] * self.fact + self.pad),
-                    int(nodes[i][1] * self.fact + self.nn)),
-                QPoint(int(nodes[i+1][0] * self.fact + self.pad),
-                    int(nodes[i+1][1] * self.fact + self.nn)))
+                QPoint(int(nodes[an][0] * self.fact + self.pad),
+                    int(nodes[an][1] * self.fact + self.nn)),
+                QPoint(int(nodes[en][0] * self.fact + self.pad),
+                    int(nodes[en][1] * self.fact + self.nn)))
 
     def labelWidget(self):
         '''Prints the label onto the widget.'''
@@ -281,8 +297,8 @@ class GGradient(QWidget, GraphicTools):
 
         self.model = model
 
-        self.support = model.support
-        self.nodes = model.support
+        self.support = model.supports
+        self.nodes = model.supports
 
         self.b = 600
         self.h = 250
@@ -311,15 +327,12 @@ class GGradient(QWidget, GraphicTools):
         self.b = self.width()
         self.h = self.height()
 
-        print('\n1 nodes ', self.nodes)
-
-
         self.nodes = self.makeNodes(self.model.nodes)
 
         self.span = self.model.span 
 
-        print('gdnt spn', self.span)
-        print('2 nodes', self.nodes)
+        # print('paintEvent span', self.span)
+        # print('paintEvent 2', self.nodes)
 
         self.l = self.b - 2 * self.pad
         self.fact = self.l / self.span
@@ -396,13 +409,15 @@ class GGradient(QWidget, GraphicTools):
         pen.setColor(QColor('gray'))
         self.painter.setPen(pen)
 
+        # print(self.model.nodes)
+
         self.painter.drawLine(
             QPoint(
-            self.nodes[0][0] * self.fact + self.pad,
-            self.nodes[0][1] * self.fact + self.nn),
+            self.model.nodes[0][0] * self.fact + self.pad,
+            self.model.nodes[0][1] * self.fact + self.nn),
             QPoint(
-            self.nodes[-1][0] * self.fact + self.pad,
-            self.nodes[-1][1] * self.fact + self.nn)
+            self.model.nodes[-1][0] * self.fact + self.pad,
+            self.model.nodes[-1][1] * self.fact + self.nn)
         )
 
     def drawGradientPoints(self):
@@ -412,7 +427,7 @@ class GGradient(QWidget, GraphicTools):
         pen.setColor(QColor('red'))
         self.painter.setPen(pen)
 
-        for i, co in enumerate(self.nodes): 
+        for i, (id, co) in enumerate(self.model.nodes.items()): 
             self.painter.drawPoint(QPoint(
                             co[0] * self.fact + self.pad,
                             self.nn + co[1] * self.fact))
@@ -425,12 +440,18 @@ class GGradient(QWidget, GraphicTools):
         pen.setColor(QColor(QColor('dark green')))
         self.painter.setPen(pen)
 
-        for i in range(len(self.nodes)-1):
+        nodelist = list(self.model.nodes.keys())
+
+        for i in range(len(self.model.nodes)-1):
+            
+            an = nodelist[i]
+            en = nodelist[i+1] 
+
             self.painter.drawLine(
-                QPoint(int(self.nodes[i][0] * self.fact + self.pad),
-                    int(self.nodes[i][1] * self.fact + self.nn)),
-                QPoint(int(self.nodes[i+1][0] * self.fact + self.pad),
-                    int(self.nodes[i+1][1] * self.fact + self.nn)))
+                QPoint(int(self.model.nodes[an][0] * self.fact + self.pad),
+                    int(self.model.nodes[an][1] * self.fact + self.nn)),
+                QPoint(int(self.model.nodes[en][0] * self.fact + self.pad),
+                    int(self.model.nodes[en][1] * self.fact + self.nn)))
 
     def labelWidget(self):
         '''Prints the label onto the widget.'''
