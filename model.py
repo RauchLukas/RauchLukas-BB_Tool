@@ -10,10 +10,17 @@ class Model():
         self.mlc = 'MLC20'
         self.lm1 = False
 
-        self.nodes = []
         self.supports = [[0,0], [30,0]]
+        # self.nodes = []
+        # Node structure dict{Id: [x, y]}
+        self.nodes = dict()
+        self.nodes[0] = self.supports[0]
+        self.nodes[-1] = self.supports[1]
+        self.nodecount = 0
+        # self.nodes[1] = [15,3]
+        # self.nodes[2] = [3,3]
 
-        self.span = self.supports[-1][0]-self.supports[0][0]
+        self.span = self.nodes[-1][0] - self.nodes[0][0]
         self.spacing = 3.50
 
         self.krag = 0.5
@@ -52,20 +59,20 @@ class Model():
         self.m_database = Material()
         self.m_class_lt = 'c24'
         self.m_lt = self.m_database.wood(self.m_class_lt)
-        self.m_lt_nkl = 2
-        self.m_lt_kled = 'k_sk'
+        self.m_lt_nkl = 3
+        self.m_lt_kled = 'kurz'
         self.m_lt_type = 'vh'
 
         self.m_class_tb = 'c24'
         self.m_tb = self.m_database.wood(self.m_class_tb)
-        self.m_tb_nkl = 2
-        self.m_tb_kled = 'k_sk'
+        self.m_tb_nkl = 3
+        self.m_tb_kled = 'kurz'
         self.m_tb_type = 'vh'
 
         self.m_class_jt = 'c24'
         self.m_jt = self.m_database.wood(self.m_class_jt)
-        self.m_jt_nkl = 2
-        self.m_jt_kled = 'k_sk'
+        self.m_jt_nkl = 3
+        self.m_jt_kled = 'kurz'
         self.m_jt_type = 'vh'
 
         self.nu_m_lt = None
@@ -123,37 +130,45 @@ class Model():
     def makeNodes(self, nodelist):
         '''Collecting the actual node list and the support coordinates making one sorted nodelist.'''
 
-        out = [self.supports[0]]
-        end = self.supports[-1]
+        try:
+            # nodelist = sorted(nodelist, key=lambda x: x[0] )
+            nodelist = ({k: v for k, v in sorted(nodelist.items(), key=lambda item: item[1])})      # sort the dict by x-val
+        except:
+            pass
 
-        # Check if Nodelist is empty 
-        #   -> In case: make it [0,0]
-        if nodelist == []:
-            nodelist = out
-        if nodelist == [[]]:
-            nodelist = out
-        # If nodelist is NOT empty, but dose not has [0,0] in first place
-        #   -> Append it to [0,0]
-        if nodelist[0][0] != 0: 
-            out.extend(nodelist)
-        else: 
-        #   -> In Case nodelist has [0,0] just copy it
-            out = nodelist
-        if out[-1][0] != end[0]: 
-            out.append(end)
+        # out = [self.supports[0]]
+        # end = self.supports[-1]
 
-        out = sorted(out, key=lambda x: x[0] )
+        # # Check if Nodelist is empty 
+        # #   -> In case: make it [0,0]
+        # if nodelist == []:
+        #     nodelist = out
+        # if nodelist == [[]]:
+        #     nodelist = out
+        # # If nodelist is NOT empty, but dose not has [0,0] in first place
+        # #   -> Append it to [0,0]
+        # if nodelist[0][0] != 0: 
+        #     out.extend(nodelist)
+        # else: 
+        # #   -> In Case nodelist has [0,0] just copy it
+        #     out = nodelist
+        # if out[-1][0] != end[0]: 
+        #     out.append(end)
 
-        self.nodes = out
-        return out
+        # out = sorted(out, key=lambda x: x[0] )
+
+        # self.nodes = {k: v for k, v in sorted(out.items(), key=lambda item: item[1])}      # sort the dict by x-val
+        self.nodes = nodelist
+
+        return nodelist
 
     def getNodesSeperated(self):
         
         x = []
         y = []
-        for xi, yi in iter(self.nodes):
-            x.append(xi)
-            y.append(yi)
+        for key, nodes in iter(self.nodes.items()):
+            x.append(nodes[0])
+            y.append(nodes[1])
 
         return x, y
 

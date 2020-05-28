@@ -3,6 +3,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
 import random
+import copy
 
 import listwidget as lw
 import tabwidget as tw
@@ -49,7 +50,7 @@ class bbToolUi(QWidget):
         # Import the GUI modula
         self._createLoadWidget()
 
-        self.listwidget = lw.ListWidget(self.nodes, self.model.support)
+        self.listwidget = lw.ListWidget(self.model)
 
         self.listwidget._createGeograpyWidget()
         self.listwidget.placeWidget(self.layoutLeft)
@@ -68,8 +69,9 @@ class bbToolUi(QWidget):
         self.lm1_class.stateChanged.connect(self._triger_refresh_load)
 
         self.listwidget.clickedAddButten.connect(self._trigger_refresh_add)
-        self.listwidget.clickedDelButten.connect(self._trigger_refresh_add)
-        self.listwidget.clickedDelButten.connect(self._trigger_refresh_item)
+        self.listwidget.clickedDelButten.connect(self._trigger_refresh_del)
+        # self.listwidget.clickedAddButten.connect(self._trigger_refresh_item)
+        # self.listwidget.clickedDelButten.connect(self._trigger_refresh_item)
         self.listwidget.clickedlistItem.connect(self._trigger_refresh_item)
 
         self.stackwidget.tab_1.elementLengthChanged.connect(self._triger_refresh_system)
@@ -122,10 +124,18 @@ class bbToolUi(QWidget):
         self.model._triger_refresh()
         self._graphic.crosssec._triger_refresh_model()
 
+    def _trigger_refresh_del(self):
+
+        self.model._triger_refresh()
+        selected_node = [None, None]
+        # self._graphic.gradient._triger_refresh(nodes=True, selection=selected_node)
+        nodes = self.model.makeNodes(self.model.nodes)
+        self._graphic._triger_refresh(nodes=nodes)
+
     def _trigger_refresh_add(self):
 
         try:
-            self.nodes[0]
+            self.model.nodes[1]
             nodes = self.model.makeNodes(self.model.nodes)
             self._graphic._triger_refresh(nodes=nodes)
             self.model._triger_refresh()
@@ -134,15 +144,24 @@ class bbToolUi(QWidget):
     
     def _trigger_refresh_item(self):
 
-        index = self.listwidget.geo_list.currentRow()
-        if index == -1:
-            self.selected_node = [None, None]
-            nodes = self.model.makeNodes(self.nodes)
-            self._graphic._triger_refresh(nodes=nodes, selection=self.selected_node)
+        row = self.listwidget.geo_list.currentRow()
+
+        if row == -1:
+            pass
         else:
-            self.selected_node = self.nodes[index]
-            nodes = self.model.makeNodes(self.nodes)
-            self._graphic._triger_refresh(nodes=nodes, selection=self.selected_node)
+            item = self.listwidget.geo_list.item(row)
+        
+            selected_node = self.model.nodes[item.id]
+            self._graphic.gradient._triger_refresh(nodes=False, selection=selected_node)
+
+        # # print('id ', item.id)
+        #     self.selected_node = [None, None]
+        #     nodes = self.model.makeNodes(self.model.nodes)
+        #     self._graphic._triger_refresh(nodes=nodes, selection=self.selected_node)
+        # else:
+        #     # self.selected_node = self.model.nodes[index+1]
+        #     # # nodes = self.model.makeNodes(self.model.nodes)
+        #     self._graphic._triger_refresh()
 
     def _createLoadWidget(self):
         '''Creates the load input widget.'''
@@ -187,31 +206,52 @@ class bbToolUi(QWidget):
             self.length.clear()
             
         try: 
-            if 0 <= nx <= 40:
+            if 0 < nx <= 40:
 
                 self.model.span = nx
                 self._update_nodes(nx)
                 
             if nx > 40:
                 self.length.setText('40.0')
-            if nx < 0:
-                self.length.setText('0.0')
+                self._update_nodes(40.0)
+            if nx <= 0:
+                self.length.setText('1.0')
+                self._update_nodes(1.0)
                   
         except:
             pass
 
     def _update_nodes(self, span):
 
-        for id, node in enumerate(self.model.nodes):
-            if node[0] >= span or node[0] >= self.model.support[1][0]:
-                del self.model.nodes[id]
+        if self.model.nodes[-1]:
 
-        self.model.nodes.append([span, 0])
-        self.model.support[1] = [span, 0]
-        
+            del self.model.nodes[-1]
+
+            nodelist = list(self.model.nodes.items())
+
+            for node_id, node in nodelist:
+
+                if node[0] >= span or node[0] >= self.model.support[1][0]:
+
+                    for item_id in range(self.listwidget.geo_list.count()):
+                        item = self.listwidget.geo_list.item(item_id)       # 
+                        row = self.listwidget.geo_list.row(item)
+                        if item.id == node_id:
+
+                            dump.append(row)
+                            item = self.listwidget.geo_list.takeItem(row)
+                            del item
+                            break
+
+                    del self.model.nodes[node_id]
+
+        self.listwidget.geo_list.update()
+
+        self.model.nodes[-1]  = [span, 0]
+        self.model.supports = [[0,0], [span, 0]]
 
         self._triger_refresh_model()
-        self._trigger_refresh_geo()
+        self._trigger_refresh_add()
 
     def loadClassChanged(self):
         self.model.setmlc(self.mlc_class.currentText())
@@ -252,7 +292,7 @@ class IndicatorWidget(QWidget):
         else: 
             self.status = 1
 
-        self.update()
+        # self.update()
 
     def paintEvent(self, event):
         '''Painter function within the GUI loop. Calls all the necessary draw functions.'''
