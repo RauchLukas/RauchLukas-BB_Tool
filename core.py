@@ -119,7 +119,7 @@ class Core():
 
     def getSurfaceShellLode(self):
 
-        self.b_ef = 1.0      # TODO Fix effektive Breite
+        self.b_ef = 0.8      # TODO Fix effektive Breite
 
         phi_w, phi_t = self.Schwingungsbeiwert()
 
@@ -128,8 +128,8 @@ class Core():
         mek_g = self.gamma_holz * self.b_ef * self.tb_t * lt_a**2 / 8
         qek_g = self.gamma_holz * self.b_ef * self.tb_t * lt_a / 2
 
-        mek_mlc = mlc_single_wheeld[self.mlc] * lt_a**2 / 4
-        qek_mlc = mlc_single_wheeld[self.mlc] / 2
+        mek_mlc = 9.81 * mlc_single_wheeld[self.mlc] * lt_a**2 / 4
+        qek_mlc = 9.81 * mlc_single_wheeld[self.mlc] / 2
 
         med = self.gamma_g * mek_g + self.gamma_mlc * mek_mlc
         qed = self.gamma_g * qek_g + self.gamma_mlc * qek_mlc
@@ -182,7 +182,7 @@ class Core():
             2. Abstand zwischen zwei Lagern ist größer als die doppelte Auflagerbreite.
         '''
         a = b * (b + 2 * 0.03)          # in  [m]
-        rd = a * kc90 * fc90d * 1e3     # in kN 
+        rd = a * kc90 * fc90d * 1e+3     # in kN 
 
         return rd
 
@@ -193,16 +193,16 @@ class Core():
         kmod = self.material.kmod(self.nkl, self.kled)
 
         fmk = self.model.m_tb['fmk']
-        ft0k = self.model.m_tb['ft0k']
+        fvk = self.model.m_tb['fvk']
 
-        ft0d = kmod * kcr * ft0k / self.gamma_m
+        fvd = kmod * kcr * fvk / self.gamma_m         # MN/m²
 
-        fmd = self.kmod * fmk / self.gamma_m
+        fmd = self.kmod * fmk / self.gamma_m            # MN/m²
 
-        wy = self.b_ef * self.tb_t**2 / 6                # m4
+        wy = self.b_ef * self.tb_t**2 / 6                # m³
 
-        mRd = wy * fmd * 1e3                             # kNm 
-        vRd = self.b_ef * self.tb_t * ft0d / 1.5  *1e+3  # kN 
+        mRd = wy * fmd * 1e+3                             # kNm 
+        vRd = self.b_ef * self.tb_t * fvd / 1.5  *1e+3  # kN 
 
         return mRd, vRd
 
@@ -227,12 +227,12 @@ class Core():
         nu_t_v = ved/vrd            # Querkraftnach Tragbelag
         
 
-        print(f"\nAusnutungsgrade: \nMoment: {nu_m:.2f} \nQuerkraft: {nu_v:.2f} \nAuflagerpressung {nu_a:.2f}")
-        print(f"Moment Tragbelag: {nu_t_m:.2f} \nQuerkraft Tragbelag: {nu_t_v:.2f}")
+        # print(f"\nAusnutungsgrade: \nMoment: {nu_m:.2f} \nQuerkraft: {nu_v:.2f} \nAuflagerpressung {nu_a:.2f}")
+        # print(f"Moment Tragbelag: {nu_t_m:.2f} \nQuerkraft Tragbelag: {nu_t_v:.2f}")
 
         nu = max(nu_m, nu_v, nu_a, nu_t_m, nu_t_v)
 
-        print(f"Maximaler Ausnurtzungsgrad: nu = {nu:.2f}")
+        # print(f"Maximaler Ausnurtzungsgrad: nu = {nu:.2f}")
 
         return nu
 
